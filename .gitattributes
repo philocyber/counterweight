@@ -1,0 +1,4 @@
+# Text is stored with LF so gofmt, shell and CI behave the same on every platform.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.sh  text eol=lf

@@ -1,0 +1,57 @@
+Counterweight
+Copyright (C) 2026 The Counterweight authors
+Maintained by PhiloCyber: https://github.com/Philocyber/counterweight
+
+This product is a derivative work licensed under the GNU Affero General Public
+License, version 3.0 (AGPL-3.0). See the LICENSE file for the full terms.
+
+
+Attribution
+-----------
+
+Counterweight is built on ARTEX, an autonomous AI penetration-testing system by
+Autumn-27, from which this project derives its code and architecture:
+
+    ARTEX        https://github.com/Autumn-27/ARTEX        (AGPL-3.0)
+
+Additional upstream components credited:
+
+    norma SDK    https://github.com/Autumn-27/norma         (agent capabilities)
+    ScopeSentry  https://github.com/Autumn-27/ScopeSentry    (asset-sync concepts)
+
+Several skill files under skills/ are adapted from Dreadnode's capabilities
+project (MIT License), commit 52f369eae047ba7a8b6b72d650355e4c6be4ec42:
+
+    capabilities https://github.com/dreadnode/capabilities      (MIT)
+
+See docs/CAPABILITIES-IMPORT-2026-10-22.md for the full list of imported and
+adapted skills, and each skill's own SKILL.md for its individual provenance
+note.
+
+The white-box code review skill (skills/whitebox-code-review-methodology/)
+adapts rules from, and copies the attack-class and domain hunting files of,
+Cloudflare's security-audit-skill (MIT License, Copyright (c) 2025-2026
+Cloudflare, Inc.), commit c1c8a8c1471069fb0e188eeaff69b8e8db6564a8:
+
+    security-audit-skill https://github.com/cloudflare/security-audit-skill (MIT)
+
+The upstream license text is kept in that skill directory as
+LICENSE-cloudflare.txt.
+
+The web console under web/ is built on the next-shadcn-admin-dashboard template
+(MIT License, Copyright (c) 2024 Mohammed Arham Khan):
+
+    next-shadcn-admin-dashboard https://github.com/arhamkhnz/next-shadcn-admin-dashboard (MIT)
+
+The upstream license text is kept as web/LICENSE.
+
+The original ARTEX copyright, authorship, contributor acknowledgments, and
+upstream changelog history are retained and remain attributed to their authors.
+This project changes the product name, the user-facing interface and messages,
+the documentation, and the distribution targets, and renames ARTEX's internal
+identifiers (module path, environment variables, database/login defaults) to
+Counterweight's own.
+
+Under the AGPL-3.0, if you run a modified version of this software and let users
+interact with it over a network, you must offer those users the complete
+corresponding source code of your modified version.

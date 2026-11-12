@@ -1,0 +1,46 @@
+name: Feature request
+description: Suggest an improvement or a new capability.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Counterweight is built to help organizations defend themselves; requests whose main purpose is causing harm (for example denial of service) will be closed.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation and who it affects (for example a small IT team running its first assessment).
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What you would like to happen. Mockups or examples are welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Setup and installation
+        - Black-box assessments
+        - White-box code review
+        - Approval gate and scope
+        - Findings, evidence and reports
+        - Model providers
+        - Integrations (MCP, skills, tools, adapter)
+        - Documentation
+        - Other
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I would like to work on this.

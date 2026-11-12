@@ -1,0 +1,99 @@
+# backend
+/data/
+*.db
+*.db-wal
+*.db-shm
+config.json
+scheduler_state.json
+__pycache__/
+*.pyc
+*.pyo
+
+# frontend
+web/node_modules/
+web/.next/
+web/tsconfig.tsbuildinfo
+web/next-env.d.ts
+*.local
+
+# development tools
+.playwright-mcp/
+.playwright-cli/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+
+# os
+.DS_Store
+Thumbs.db
+
+# claude code local state
+.claude/
+
+# Local coding-agent state
+.codex/
+
+# Binary with embedded frontend
+/counterweight
+/counterweight.exe
+# Self-update staging, backup, failed binary and marker
+/counterweight.new
+/counterweight.new.sha256
+/counterweight.old
+/counterweight.failed
+/counterweight.upgrade.json
+/server/webui/dist/
+/dist/
+
+# Runtime JWT signing key; never commit
+/jwt.key
+
+# Local Docker environment with passwords/keys; never commit
+.env
+/tls/
+
+# Scheduler test event logs
+*-events.csv
+
+# Local benchmark artifacts
+/bench/
+/Dockerfile.bench
+/Dockerfile.bench.v2
+node_modules/
+
+# Local visual QA captures
+/.impeccable/review/
+/.impeccable/questions/
+
+# Local Codex Security tooling, separate from application package manifests
+/package.json
+/package-lock.json
+
+# Private OAuth credentials for ChatGPT subscriptions
+/chatgpt-subscription/
+
+# Local database dumps, build helpers and design-tool state
+/backups/
+/build.exe
+.impeccable/
+
+# Internal working notes kept out of the public repository
+/_private/
+
+# Machine-specific Compose overrides (e.g. exposing Postgres to a native backend)
+docker-compose.override.yml
+
+# Output of the documented log and backup commands, credential files and editor backups.
+/counterweight.log
+/counterweight.sql
+*.sql.gz
+github-token.json
+jira-credential.json
+.env.*
+!.env.example
+*.bak
+*.orig
+*~
+secrets.key

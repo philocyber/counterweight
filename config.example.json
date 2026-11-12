@@ -1,0 +1,20 @@
+{
+  "_comment": "Copy to config.json, or select another path with COUNTERWEIGHT_CONFIG. Only database and skill_dir are read from this file. Configure LLM options through environment variables or application settings.",
+  "_comment_database": "PostgreSQL connection. COUNTERWEIGHT_PG_DSN overrides database. Use either individual fields below or database.dsn with a complete connection string.",
+  "database": {
+    "host": "127.0.0.1",
+    "port": 5432,
+    "user": "counterweight",
+    "password": "",
+    "dbname": "counterweight",
+    "sslmode": "disable"
+  },
+  "_comment_database_dsn": "Alternative: replace database above with this DSN form. A nonempty dsn overrides individual fields.",
+  "_example_database_dsn": {
+    "database": {
+      "dsn": "postgres://user:pass@db.example.com:5432/counterweight?sslmode=require"
+    }
+  },
+  "_comment_skill_dir": "Skill root: each child directory contains SKILL.md. Precedence: COUNTERWEIGHT_SKILL_DIR, this field, then skills/ beside the executable. Omit or leave empty for the default. Relative paths resolve against the working directory.",
+  "skill_dir": ""
+}

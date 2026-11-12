@@ -1,0 +1,5 @@
+# Reviewed historical false positives: the curl rule spans separate mock records
+# and mistakes sqlmap's target URL (-u) for curl authentication. No credentials.
+5962826f2d68b00edd274db0c509a5ae7d1b86d0:web/src/lib/mock/data.ts:curl-auth-user:629
+0ef8561411dd1757e41ba3c45d1436e1fd3774f1:web/src/lib/mock/data.ts:curl-auth-user:252
+0ef8561411dd1757e41ba3c45d1436e1fd3774f1:web/src/lib/mock/data.ts:curl-auth-user:370

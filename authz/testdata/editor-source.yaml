@@ -1,0 +1,69 @@
+# Source of the fixtures that prove a policy survives the console's matrix editor:
+#   editor-document.json  what the server hands the editor for this file (go test ./authz -run TestDocument -update)
+#   editor-emitted.yaml   what the editor writes back from that document (web: UPDATE_FIXTURES=1 npm test)
+# Comments are not part of a document, so the editor does not write them back.
+version: 1
+target: { base_url: "https://staging.example.test", timeout_seconds: 20 }
+personas:
+  anonymous:
+  viewer:
+    login:
+      request:
+        method: POST
+        path: /api/login
+        json: { tenant: acme, username: "${account:viewer.username}", password: "${account:viewer.password}" }
+      token: { json_pointer: /token, prefix: "Bearer " }
+    identity:
+      request: { method: GET, path: /api/me }
+      body_contains: ["${account:viewer.username}"]
+  editor:
+    login:
+      request:
+        method: POST
+        path: /session
+        form: { user: "${account:editor.username}", pass: "${account:editor.password}" }
+      status: [200, 302]
+    identity:
+      request: { method: GET, path: /api/me, headers: { Accept: application/json } }
+      status: 200
+      body_contains: ['"role":"editor"', "it's: here # not a comment"]
+  admin:
+    role: "Administrator (tenant A)"
+    headers: { X-Api-Key: "${account:admin.token}" }
+    identity:
+      request: { method: GET, path: /api/me }
+      body_contains: ["yes"]
+  "007":
+    headers: { Authorization: "Bearer ${account:007.token}" }
+    identity: { request: { method: GET, path: /api/me }, body_contains: ["null"] }
+cases:
+  - id: projects-list
+    request: { method: GET, path: /api/projects }
+    expect:
+      anonymous: { deny: [401, 403] }
+      viewer: { allow: 200 }
+      editor: { allow: 200 }
+      admin: { allow: 200 }
+      "007": { allow: 200 }
+  - id: report-update
+    allow_write: true
+    request:
+      method: PUT
+      path: "/api/reports/r1?draft=true"
+      headers: { X-Trace: "a b" }
+      json: { title: "Quarterly: summary", pages: 12, ratio: 0.5, tags: [a, "true", null], nested: { ok: true, n: -3 } }
+    expect:
+      anonymous: { deny: 401 }
+      viewer: { deny: 200, body_contains: ["Access denied"], body_not_contains: ["Saved"] }
+      editor: { deny: 302, location_contains: /login }
+      admin: { allow: [200, 204] }
+      "007": { deny: 403 }
+  - id: purge
+    allow_write: true
+    deny_all: true
+    request: { method: POST, path: /api/purge, form: {} }
+    expect: { anonymous: { deny: 401 }, viewer: { deny: 403 }, editor: { deny: 403 }, admin: { deny: 403 }, "007": { deny: 403 } }
+  - id: export
+    allow_write: true
+    request: { method: POST, path: /api/export, body: "a=1&b=two words" }
+    expect: { anonymous: { deny: 401 }, viewer: { deny: 403 }, editor: { deny: 403 }, admin: { allow: 200 }, "007": { allow: 200 } }

@@ -1,0 +1,146 @@
+// nav messages. Sidebar labels, one-line item descriptions, search keywords and the System settings sections. English is the source catalog; add the Spanish string for every key.
+
+export const en = {
+  // Groups
+  groupAdvanced: "Advanced",
+
+  // Item labels that were renamed to plain language
+  assets: "Targets and scope",
+  sync: "Import targets",
+  workspace: "Files",
+  commands: "Command history",
+  llmRecords: "Model call log",
+  llm: "Models",
+  intercept: "Approval rules",
+  assetIntercept: "Blocked targets",
+  approvals: "Approval history",
+
+  // One-line descriptions (tooltip and accessible description)
+  descDashboard: "Overview of your tasks and findings, and what needs your attention.",
+  descTasks: "Create security assessments, run them and follow their progress.",
+  descFindings: "Security issues found so far, to review, confirm and track.",
+  descChat: "Ask questions or give instructions in plain language.",
+  descAssets: "The systems you are authorized to test; tasks stay inside this list.",
+  descSync: "Bring targets in from an external source instead of typing them.",
+  descWorkspace: "Browse, edit and upload the files that tasks work with.",
+  descTraffic: "HTTP requests and responses recorded while testing.",
+  descCommands: "Every command the tools ran, with its output and result.",
+  descLlmRecords: "What was sent to and received from the AI model, for debugging and cost checks.",
+  descLogs: "Server log messages, for troubleshooting.",
+  descLlm: "The AI models Counterweight uses, with their limits and keys.",
+  descNotify: "Send new findings to chat channels such as DingTalk, Feishu or WeCom.",
+  descSettings: "Version and updates, integrations, network, data capture and other global switches.",
+  descIntercept: "Rules that decide which commands run on their own, need your approval or are refused.",
+  descAssetIntercept: "Domains, IPs, URLs and subnets that no task may touch.",
+  descApprovals: "Commands that needed a person's decision: pending requests and past decisions.",
+  descAgents: "Prompts and settings of the built-in agents, and your own chat agents.",
+  descMcp: "Connect external MCP tool servers and choose which agents can use them.",
+  descSkills: "Reusable instruction packs that agents can load.",
+  descTools: "The tools agents can call, plus custom tools you define.",
+  descDocs: "How to use Counterweight, step by step.",
+
+  // Pending approvals badge
+  approvalsWaitingOne: "1 approval waiting",
+  approvalsWaitingMany: "{p0} approvals waiting",
+
+  // Search keywords: previous names, so the search still finds a page by its old name (English and Spanish)
+  kwAssets: "Assets Activos",
+  kwSync: "Asset sync Sincronización de activos",
+  kwWorkspace: "Workspace Espacio de trabajo",
+  kwCommands: "Tool executions Ejecuciones de herramientas",
+  kwLlmRecords: "LLM recordings Grabaciones de LLM",
+  kwLlm: "LLM",
+  kwIntercept: "Interception rules Reglas de interceptación",
+  kwAssetIntercept: "Asset blocking Bloqueo de activos blocklist",
+  kwApprovals: "Approval records Registros de aprobación",
+
+  // System settings sections
+  settingsTabsLabel: "Settings sections",
+  settingsTabGeneral: "General",
+  settingsTabIntegrations: "Integrations",
+  settingsTabNetwork: "Network",
+  settingsTabCapture: "Data capture",
+  settingsTabExperimental: "Experimental",
+  settingsGeneralHint: "Version and updates, how many workers run per task, and your own preferences.",
+  settingsIntegrationsHint: "Connect GitHub and Jira so findings can reach the teams that fix them.",
+  settingsNetworkHint: "How Counterweight reaches the internet: proxy and web search.",
+  settingsCaptureHint: "What is recorded during a task and which scope rules agents receive.",
+  settingsExperimentalHint: "Features still being validated. They are off by default and may change.",
+  settingsExperimentalBadge: "Experimental",
+  settingsCaptureNote:
+    "Recorded requests and responses can contain passwords, tokens and personal data from the target. They are stored on this server.",
+  settingsConstraintsNote:
+    "Turning a switch off removes your allow and deny entries from that agent's prompt, so it may test outside the boundaries you wrote.",
+  settingsWebSearchNote: "Search queries leave this server and go to the search provider you choose.",
+  settingsCompactionNote: "Uses extra model calls to summarize long conversations, which adds cost.",
+};
+
+export const es: Record<keyof typeof en, string> = {
+  groupAdvanced: "Avanzado",
+
+  assets: "Objetivos y alcance",
+  sync: "Importar objetivos",
+  workspace: "Archivos",
+  commands: "Historial de comandos",
+  llmRecords: "Registro de llamadas al modelo",
+  llm: "Modelos",
+  intercept: "Reglas de aprobación",
+  assetIntercept: "Objetivos bloqueados",
+  approvals: "Historial de aprobaciones",
+
+  descDashboard: "Resumen de tus tareas y hallazgos, y de lo que requiere tu atención.",
+  descTasks: "Crea evaluaciones de seguridad, ejecútalas y sigue su avance.",
+  descFindings: "Problemas de seguridad encontrados hasta ahora, para revisar, confirmar y seguir.",
+  descChat: "Haz preguntas o da instrucciones en lenguaje natural.",
+  descAssets: "Los sistemas que tienes autorización para probar; las tareas se quedan dentro de esta lista.",
+  descSync: "Trae objetivos desde una fuente externa en lugar de escribirlos.",
+  descWorkspace: "Explora, edita y sube los archivos con los que trabajan las tareas.",
+  descTraffic: "Solicitudes y respuestas HTTP registradas durante las pruebas.",
+  descCommands: "Cada comando que ejecutaron las herramientas, con su salida y resultado.",
+  descLlmRecords: "Lo que se envió al modelo de IA y lo que respondió, para depurar y revisar costos.",
+  descLogs: "Mensajes de registro del servidor, para resolver problemas.",
+  descLlm: "Los modelos de IA que usa Counterweight, con sus límites y claves.",
+  descNotify: "Envía los hallazgos nuevos a canales de chat como DingTalk, Feishu o WeCom.",
+  descSettings: "Versión y actualizaciones, integraciones, red, captura de datos y otros ajustes globales.",
+  descIntercept:
+    "Reglas que deciden qué comandos se ejecutan solos, cuáles necesitan tu aprobación y cuáles se rechazan.",
+  descAssetIntercept: "Dominios, IPs, URLs y subredes que ninguna tarea puede tocar.",
+  descApprovals: "Comandos que necesitaron la decisión de una persona: solicitudes pendientes y decisiones pasadas.",
+  descAgents: "Prompts y ajustes de los agentes integrados, y de tus propios agentes de chat.",
+  descMcp: "Conecta servidores de herramientas MCP externos y elige qué agentes pueden usarlos.",
+  descSkills: "Paquetes de instrucciones reutilizables que los agentes pueden cargar.",
+  descTools: "Las herramientas que pueden llamar los agentes, y las personalizadas que definas.",
+  descDocs: "Cómo usar Counterweight, paso a paso.",
+
+  approvalsWaitingOne: "1 aprobación pendiente",
+  approvalsWaitingMany: "{p0} aprobaciones pendientes",
+
+  kwAssets: "Assets Activos",
+  kwSync: "Asset sync Sincronización de activos",
+  kwWorkspace: "Workspace Espacio de trabajo",
+  kwCommands: "Tool executions Ejecuciones de herramientas",
+  kwLlmRecords: "LLM recordings Grabaciones de LLM",
+  kwLlm: "LLM",
+  kwIntercept: "Interception rules Reglas de interceptación",
+  kwAssetIntercept: "Asset blocking Bloqueo de activos blocklist",
+  kwApprovals: "Approval records Registros de aprobación",
+
+  settingsTabsLabel: "Secciones de ajustes",
+  settingsTabGeneral: "General",
+  settingsTabIntegrations: "Integraciones",
+  settingsTabNetwork: "Red",
+  settingsTabCapture: "Captura de datos",
+  settingsTabExperimental: "Experimental",
+  settingsGeneralHint: "Versión y actualizaciones, cuántos workers corren por tarea y tus preferencias.",
+  settingsIntegrationsHint: "Conecta GitHub y Jira para que los hallazgos lleguen a los equipos que los corrigen.",
+  settingsNetworkHint: "Cómo llega Counterweight a internet: proxy y búsqueda web.",
+  settingsCaptureHint: "Qué se registra durante una tarea y qué reglas de alcance reciben los agentes.",
+  settingsExperimentalHint: "Funciones que aún se están validando. Vienen desactivadas y pueden cambiar.",
+  settingsExperimentalBadge: "Experimental",
+  settingsCaptureNote:
+    "Las solicitudes y respuestas registradas pueden contener contraseñas, tokens y datos personales del objetivo. Se guardan en este servidor.",
+  settingsConstraintsNote:
+    "Al desactivar un interruptor, tus entradas de permitir y denegar salen del prompt de ese agente, y podría probar fuera de los límites que escribiste.",
+  settingsWebSearchNote: "Las consultas de búsqueda salen de este servidor y van al proveedor de búsqueda que elijas.",
+  settingsCompactionNote: "Usa llamadas extra al modelo para resumir conversaciones largas, lo que suma costo.",
+};

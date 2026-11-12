@@ -1,0 +1,187 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+
+# Build jobs only read the repository; the signing job and the two publishing jobs are set up below.
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+        working-directory: web
+      - run: npm run build:static
+        working-directory: web
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: web-dist
+          path: web/out
+
+  binaries:
+    needs: frontend
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { goos: linux, goarch: amd64 }
+          - { goos: linux, goarch: arm64 }
+          - { goos: darwin, goarch: amd64 }
+          - { goos: darwin, goarch: arm64 }
+          - { goos: windows, goarch: amd64 }
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: web-dist
+          path: server/webui/dist
+      - name: Build and package with build.sh
+        env:
+          COUNTERWEIGHT_TARGET_OS: ${{ matrix.goos }}
+          COUNTERWEIGHT_TARGET_ARCH: ${{ matrix.goarch }}
+          COUNTERWEIGHT_BUILD_VERSION: ${{ github.ref_name }}
+          COUNTERWEIGHT_SKIP_FRONTEND: "1"
+          COUNTERWEIGHT_SKIP_NPM_CI: "1"
+          COUNTERWEIGHT_COMPRESS: "0"
+          COUNTERWEIGHT_PACKAGE: "1"
+          COUNTERWEIGHT_PACKAGE_DIR: dist
+        run: |
+          ./build.sh --target "${COUNTERWEIGHT_TARGET_OS}/${COUNTERWEIGHT_TARGET_ARCH}"
+      - name: Smoke test Linux amd64 binary
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        run: dist/counterweight-linux-amd64/counterweight -h
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pkg-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: "dist/*.zip"
+
+  # The only job that sees the signing key. It runs no third-party action: only the repository's own
+  # source at the tag, built here, and GitHub's first-party checkout, Go and artifact actions. It
+  # has read access only and waits on the protected environment named below (created, with its
+  # protection rule, in the repository settings).
+  sign:
+    needs: binaries
+    runs-on: ubuntu-latest
+    environment: release-signing
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: pkg-*
+          merge-multiple: true
+          path: dist
+      - name: Generate checksums
+        working-directory: dist
+        run: sha256sum *.zip > SHA256SUMS
+      - name: Build the signing tool from this tag
+        # Built from the checked-out source, not taken from an earlier job's artifact, so nothing built
+        # elsewhere runs next to the key. It embeds the keys committed in this tag.
+        run: mkdir -p "$RUNNER_TEMP/cw" && go build -trimpath -o "$RUNNER_TEMP/cw/counterweight" ./cmd/counterweight
+      - name: Sign SHA256SUMS
+        id: sign
+        # The signing key is exposed to this step only. Without the secret the release is
+        # published unsigned, with a visible warning.
+        env:
+          COUNTERWEIGHT_RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+        run: |
+          if [ -z "$COUNTERWEIGHT_RELEASE_SIGNING_KEY" ]; then
+            echo "::warning title=Unsigned release::The RELEASE_SIGNING_KEY secret is not configured, so this release is published WITHOUT SHA256SUMS.sig. Builds that embed release keys will refuse to install it."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          "$RUNNER_TEMP/cw/counterweight" release-sign dist/SHA256SUMS
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+      - name: Verify signature
+        if: steps.sign.outputs.signed == 'true'
+        run: '"$RUNNER_TEMP/cw/counterweight" release-verify dist/SHA256SUMS'
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-sums
+          path: |
+            dist/SHA256SUMS
+            dist/SHA256SUMS.sig
+          if-no-files-found: error
+
+  # Publishes the release. It never references the signing key; it only receives the signed checksum
+  # file produced above and checks the archives against it.
+  release:
+    needs: [binaries, sign]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: pkg-*
+          merge-multiple: true
+          path: dist
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-sums
+          path: dist
+      - name: Check the archives against the checksums
+        working-directory: dist
+        run: sha256sum -c SHA256SUMS
+      - uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
+        with:
+          files: |
+            dist/*.zip
+            dist/SHA256SUMS
+            dist/SHA256SUMS.sig
+          body_path: log/changelog-${{ github.ref_name }}.md
+
+  docker:
+    needs: binaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        id: meta
+        with:
+          images: ghcr.io/philocyber/counterweight
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          build-args: VERSION=${{ github.ref_name }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

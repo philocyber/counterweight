@@ -1,0 +1,10 @@
+# Trusted release signing keys, one base64 Ed25519 public key per line.
+# Blank lines and lines starting with # are ignored. This file is embedded in the binary.
+#
+# While this file contains no key, builds of this repository do NOT verify release signatures
+# and in-app updates rely on the SHA256SUMS checksum only. Once a key is listed here, every
+# update must carry a SHA256SUMS.sig that verifies against one of the listed keys.
+#
+# The maintainer generates a key pair with `counterweight release-keygen`, adds the public line
+# here and stores the private key as a secret. See docs/operations.md, "Release signatures".
+dO+RiJntoO1l6fRzrs/b9GNM6aBnUuPnLnQAvjBkC8E=

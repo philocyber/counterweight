@@ -1,0 +1,156 @@
+Counterweight security statement: backdoored ARTEX Docker image
+=================================================================
+
+Date:     2026-11-05
+Status:   Investigated. Not affected.
+Subject:  "CERT-In Flags AI-Driven Attacks as Backdoored ARTEX Exposes 62
+          Consoles to Root Access" (The Hacker News, 2026-11-05)
+
+
+1. Summary
+----------
+
+We are aware of the reported backdoor in prebuilt ARTEX Docker images.
+Counterweight is derived from ARTEX, so we investigated
+whether this repository or our deployments were affected.
+
+We found no evidence that this repository or its build pipeline was
+affected. Confidence is high for the current source and build
+configuration. See section 5 for what this investigation cannot rule
+out.
+
+Counterweight never used the compromised images. It is built from the
+official upstream ARTEX source (Autumn-27/ARTEX at commit 160fe13), and
+Docker Compose builds the image locally from this checkout. It does not
+pull any image from Docker Hub.
+
+
+2. What the attack is
+---------------------
+
+Affected images (Docker Hub, both removed by Docker on 2026-11-05):
+  - tomicdd/artex
+  - congdonglinux/artex   (byte-identical re-push of tomicdd/artex)
+
+How it was spread:
+  - A copycat GitHub repository (trhhubsd/ARTEX, later ARTEXX) changed one
+    line in docker-compose.yml to pull tomicdd/artex (commit a4f4d38).
+    More than 600 forks inherited that line.
+  - About 9,000 pulls were recorded. Researchers found 62 internet-facing
+    consoles serving the backdoored build between 2026-11-02 and
+    2026-11-04.
+
+How the backdoor works:
+  - The malicious code is compiled into the Go binary inside the image
+    (/app/artex). It is not in a shell script, an entrypoint or any public
+    source, so it would not appear in a code review.
+  - A hidden server.verifyCaptcha function is added to the login handler,
+    server.(*Server).authLogin. A POST to /api/auth/login whose "captcha"
+    JSON field starts with a withheld marker runs the rest of the field
+    through "sh -c" as root and returns the output. This happens before
+    any username or password check.
+
+Indicators of compromise (as published by the researcher):
+  - Binary SHA-256 (/app/artex):
+      d5070f52262effe216b840711343bff8f2787f39208d887d8dfd9c673f8d1573
+  - Go build info: mod github.com/Autumn-27/artex
+      v0.3.16-0.20261008134550-5c0dbd4bec94+dirty
+      vcs.revision=5c0dbd4bec940f3c0faf20705a56d879b57d3dfe
+      vcs.modified=true
+  - Web UI build ID: 3aC1db3gGU08O4UHbAt4J
+  - Symbol: server.verifyCaptcha
+
+Two separate stories:
+  The Hacker News article combines this finding with CERT-In's separate
+  report on a threat actor (Crafty Falcon) using ARTEX and similar tools
+  against Indian financial institutions. The researcher says the
+  backdoored images are a distinct supply-chain issue. They are not
+  evidence that the CERT-In actor created or used this backdoor.
+
+
+3. Validation performed
+-----------------------
+
+All checks were read-only. No container was started, no image was pulled,
+and no file in the repository was modified.
+
+Source code
+  - The login handler (server/auth.go, authLogin) decodes a request with
+    only "username" and "password". There is no "captcha" field, no
+    verifyCaptcha function and no shell execution in that path. The
+    username check and bcrypt comparison run before a token is issued.
+  - The only command-execution sites in the server package
+    (command_template_platform.go, customtool.go) are not reachable from
+    the login path.
+  - The repository contains no reference to tomicdd, congdonglinux,
+    trhhubsd, ARTEXX, mianhuatang11, autumn26, andy1099zz, dgddw,
+    ylh440104 or mhtsec. It also contains no copy of the backdoor symbol,
+    revision IDs, UI build ID or binary hash.
+  - References to RuoJi6 are attribution links only (contributor credits
+    and the AegisHook and CyberStrikeAI references). Nothing downloads
+    from them.
+
+Build and deployment configuration
+  - docker-compose.yml uses "build: ." and tags the result
+    counterweight:local. Neither compromised image is referenced.
+  - Console ports 8787 and 8788 are bound to 127.0.0.1 only.
+  - update.sh rebuilds from the local checkout. It does not run
+    "docker compose pull".
+  - The self-updater targets Philocyber/counterweight releases, not the
+    removed upstream repository.
+  - The release workflow publishes only to ghcr.io/philocyber/counterweight.
+
+
+4. Guidance for users of ARTEX or forks
+---------------------------------------
+
+If you ever ran tomicdd/artex or congdonglinux/artex, or used a fork whose
+docker-compose.yml pulls either image, treat that host as compromised:
+
+  1. Stop the container. Preserve volumes and logs first.
+  2. Rebuild from reviewed source. Re-pulling the same image does not
+     remove the backdoor. Recreate the container afterwards.
+  3. Rotate every secret the container could read: database password,
+     LLM provider API keys, search and notification credentials, and
+     proxy credentials.
+  4. Replace jwt.key. It can be used to forge admin tokens.
+  5. Review targets, findings, skills, prompts and MCP definitions for
+     unexpected changes. Changes to mounted ./skills survive a re-pull.
+  6. Check the host itself for persistence outside the container.
+  7. Do not expose the console port to the internet.
+
+To check a binary: run "go version -m" on it, compare its SHA-256 with
+the IOC above, and look for the string "verifyCaptcha".
+
+
+5. Limits of this investigation
+-------------------------------
+
+  - Other hosts and cloud deployments were not inspected. Any host where
+    Counterweight (under any name) or ARTEX was installed needs the same
+    image and binary checks before it is declared unaffected.
+  - The Hacker News page could not be fetched automatically (HTTP 403).
+    Its text was supplied manually and matches the primary research.
+  - The backdoor's trigger marker is withheld by the researcher, so no
+    live exploit probe was run. The source and binary checks above are
+    the deciding evidence.
+
+
+6. Sources
+----------
+
+  - The Hacker News:
+    https://thehackernews.com/2026/11/backdoored-docker-image-for-artex-ai.html
+  - BadByte, primary technical analysis:
+    https://badbyte.io/artex-backdoor-docker-image/
+  - Ostorlab:
+    https://blog.ostorlab.co/artex-backdoored-docker-image-root-shell.html
+  - Mallory:
+    https://mallory.ai/stories/01a1aaf8-d3da-73fe-b5cd-b2d89130201b
+  - First Hackers News:
+    https://firsthackersnews.com/artex-backdoored-docker-image-root-access/
+  - CERT-In advisory CIAD-2026-0058:
+    https://www.cert-in.org.in/s2cMainServlet?pageid=PUBVLNOTES02&VLCODE=CIAD-2026-0058
+  - Published Counterweight Compose file and login handler:
+    https://github.com/philocyber/counterweight/blob/main/docker-compose.yml
+    https://github.com/philocyber/counterweight/blob/main/server/auth.go

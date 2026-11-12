@@ -1,0 +1,51 @@
+title = "Counterweight publication scan"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Synthetic notification masking and redaction sentinels"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^(notify/(mask|redact)_test\.go|server/notify_api_test\.go)$''']
+regexTarget = "secret"
+regexes = ['''^(abcdef123456|SECtest123456|LEAKPROBE0123456789abcdef|SECabcdef123456)$''']
+
+[[allowlists]]
+description = "RFC 6455 example WebSocket nonce in a local proxy test"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^traffic/proxy_clients_test\.go$''']
+regexTarget = "secret"
+regexes = ['''^dGhlIHNhbXBsZSBub25jZQ==$''']
+
+[[allowlists]]
+description = "Public loopback TLS fixture; audit-publication.mjs pins its SHA-256"
+paths = ['''^skills/api-recon/scripts/test_fixtures/tls/key\.pem$''']
+targetRules = ["private-key"]
+
+[[allowlists]]
+description = "Synthetic JWT (payload {\"sub\":\"123456\"}) used to test report redaction"
+targetRules = ["jwt"]
+paths = ['''^report/pdf_test\.go$''']
+
+[[allowlists]]
+description = "RFC 6455 example WebSocket nonce in a skill's request sample"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^skills/h2c-websocket-smuggling/SKILL\.md$''']
+regexTarget = "secret"
+regexes = ['''^dGhlIHNhbXBsZSBub25jZQ==$''']
+
+[[allowlists]]
+description = "Placeholder bearer token in a skill's curl example"
+targetRules = ["curl-auth-header"]
+condition = "AND"
+paths = ['''^skills/mcp-auth-exploitation/SKILL\.md$''']
+regexTarget = "line"
+regexes = ['''Bearer TOOL_C_TOKEN''']
+
+[[allowlists]]
+description = "Planted fake credentials that the SARIF and scanner tests must prove are redacted"
+targetRules = ["stripe-access-token", "generic-api-key", "aws-access-token"]
+paths = ['''^(report/sarif_test\.go|scanner/scanner_test\.go|server/scan_test\.go)$''']

@@ -1,0 +1,70 @@
+name: Bug report
+description: Something does not work as documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug.
+        **Security vulnerabilities must not be reported here.** Use the private process in [SECURITY.md](https://github.com/Philocyber/counterweight/blob/main/SECURITY.md).
+        Remove API keys, passwords, tokens, internal hostnames and target data from everything you paste.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the problem, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Click ...
+        3. See ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Shown in System settings → Version and updates, or printed at startup.
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installation method
+      options:
+        - Docker Compose
+        - Release binary
+        - Built from source
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system and browser
+      placeholder: Ubuntu 24.04, Firefox 140
+  - type: input
+    id: provider
+    attributes:
+      label: Model provider format (if relevant)
+      description: For example Anthropic, OpenAI Chat Completions, OpenAI Responses, a gateway or a self-hosted OpenAI-compatible server. No keys.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Backend log lines (`docker compose logs counterweight` or the terminal running start.sh). Redact secrets.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: I removed secrets and target data from this report.
+          required: true

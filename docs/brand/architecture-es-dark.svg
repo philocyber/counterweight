@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 680" width="1000" height="680" role="img" aria-labelledby="t d" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+<title id="t">Arquitectura de Counterweight</title>
+<desc id="d">Un operador, un workflow de CI o un agente de código llegan al servidor de Counterweight. Dentro, la consola y la API entregan el trabajo al motor de agentes. Los agentes que prueban aplicaciones en ejecución pasan por la compuerta de aprobación, el aislamiento de ejecución y un proxy de grabación opcional antes de llegar a los objetivos autorizados. Los agentes que revisan código fuente solo lo leen; después vienen las pistas de los escáneres, un verificador independiente y la corrección, que llega a GitHub como pull request. Los hallazgos se convierten en informes y tickets de Jira. Cada agente llama al proveedor de modelos que conectes. Los datos quedan en PostgreSQL, el directorio de datos y un directorio de claves separado.</desc>
+<defs>
+<marker id="head" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1 L7 4 L1 7" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="tail" viewBox="0 0 8 8" refX="1" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M7 1 L1 4 L7 7" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<rect x="0.5" y="0.5" width="999" height="679" rx="16" fill="#0f1416" stroke="#2b363b"/>
+<rect x="20" y="20" width="230" height="60" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="32" y="47.5" font-size="13.5" font-weight="600" fill="#e8eceb">Operador</text>
+<text x="32" y="64.5" font-size="12" fill="#9aa7ab">consola en el navegador, HTTPS</text>
+<rect x="263" y="20" width="230" height="60" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="275" y="47.5" font-size="13.5" font-weight="600" fill="#e8eceb">Workflow de CI</text>
+<text x="275" y="64.5" font-size="12" fill="#9aa7ab">GitHub Action, token de API</text>
+<rect x="506" y="20" width="230" height="60" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="518" y="47.5" font-size="13.5" font-weight="600" fill="#e8eceb">Agentes de código</text>
+<text x="518" y="64.5" font-size="12" fill="#9aa7ab">Claude Code, Codex, Pi</text>
+<path d="M135 80 V106" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<path d="M378 80 V106" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<path d="M621 80 V106" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<rect x="772" y="612" width="18" height="12" rx="3" fill="#53c5be"/>
+<text x="798" y="622.5" font-size="12" fill="#9aa7ab">decide una persona</text>
+<rect x="772" y="638" width="18" height="12" rx="3" fill="none" stroke="#9aa7ab" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="798" y="648.5" font-size="12" fill="#9aa7ab">opcional</text>
+<rect x="20" y="108" width="716" height="460" rx="14" fill="#171e21" stroke="#2b363b" stroke-width="1.2"/>
+<g transform="translate(36 120) scale(0.0351)"><g transform="translate(-250 -280)"><path d="M829.3 425A310 310 0 1 0 497.9 935.4" stroke="#e6ecea" fill="none" stroke-width="60" stroke-linecap="round"/><path d="M922.3 680.4A310 310 0 0 1 576.2 955.7" stroke="#53c5be" fill="none" stroke-width="60" stroke-linecap="round"/><polygon points="679.2,683 604.6,812.2 455.4,812.2 380.8,683 455.4,553.8 604.6,553.8" fill="#e6ecea" stroke="#e6ecea" stroke-width="36" stroke-linejoin="round"/><polygon points="964.1,547 926.1,612.9 849.9,612.9 811.9,547 849.9,481.1 926.1,481.1" fill="#53c5be" stroke="#53c5be" stroke-width="24" stroke-linejoin="round"/></g></g>
+<text x="70" y="138.5" font-size="15.5" font-weight="700" fill="#e8eceb">Servidor de Counterweight</text>
+<text x="718" y="138.5" font-size="12" fill="#9aa7ab" text-anchor="end">un binario · autoalojado</text>
+<rect x="38" y="154" width="680" height="52" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="50" y="177.5" font-size="13.5" font-weight="600" fill="#e8eceb">Consola y API</text>
+<text x="50" y="194.5" font-size="12" fill="#9aa7ab">Consola web integrada · sesiones revocables · credenciales cifradas en reposo</text>
+<path d="M378 206 V222" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<rect x="38" y="224" width="680" height="244" rx="11" fill="#132826"/>
+<text x="52" y="246" font-size="10.5" font-weight="600" letter-spacing="1.1" fill="#9aa7ab">MOTOR DE AGENTES</text>
+<text x="52" y="268" font-size="12.5" font-weight="600" fill="#e8eceb">Aplicaciones y redes en ejecución</text>
+<rect x="52" y="276" width="154" height="72" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="64" y="302" font-size="13.5" font-weight="600" fill="#e8eceb">Planner + workers</text>
+<text x="64" y="319" font-size="12" fill="#9aa7ab">grafos compartidos de</text>
+<text x="64" y="334" font-size="12" fill="#9aa7ab">activos y exploración</text>
+<rect x="218" y="276" width="154" height="72" rx="9" fill="#53c5be" stroke="#53c5be" stroke-width="1.2"/>
+<text x="230" y="302" font-size="13.5" font-weight="600" fill="#062523">Aprobación</text>
+<text x="230" y="319" font-size="12" fill="#0e3a37">alcance, reglas,</text>
+<text x="230" y="334" font-size="12" fill="#0e3a37">decide una persona</text>
+<rect x="384" y="276" width="154" height="72" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="396" y="302" font-size="13.5" font-weight="600" fill="#e8eceb">Aislamiento</text>
+<text x="396" y="319" font-size="12" fill="#9aa7ab">archivos confinados o</text>
+<text x="396" y="334" font-size="12" fill="#9aa7ab">contenedor por tarea</text>
+<rect x="550" y="276" width="154" height="72" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="562" y="302" font-size="13.5" font-weight="600" fill="#e8eceb">Proxy de grabación</text>
+<text x="562" y="319" font-size="12" fill="#9aa7ab">evidencia de tráfico,</text>
+<text x="562" y="334" font-size="12" fill="#9aa7ab">puerto 8788</text>
+<path d="M207.5 312 H216" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<path d="M373.5 312 H382" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<path d="M539.5 312 H548" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<text x="52" y="372" font-size="12.5" font-weight="600" fill="#e8eceb">Código fuente</text>
+<rect x="52" y="380" width="154" height="72" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="64" y="406" font-size="13.5" font-weight="600" fill="#e8eceb">Agentes de revisión</text>
+<text x="64" y="423" font-size="12" fill="#9aa7ab">solo lectura: sin</text>
+<text x="64" y="438" font-size="12" fill="#9aa7ab">shell ni red</text>
+<rect x="218" y="380" width="154" height="72" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="230" y="406" font-size="13.5" font-weight="600" fill="#e8eceb">Escáneres</text>
+<text x="230" y="423" font-size="12" fill="#9aa7ab">OSV-Scanner, Gitleaks,</text>
+<text x="230" y="438" font-size="12" fill="#9aa7ab">tras la revisión</text>
+<rect x="384" y="380" width="154" height="72" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="396" y="406" font-size="13.5" font-weight="600" fill="#e8eceb">Verificador</text>
+<text x="396" y="423" font-size="12" fill="#9aa7ab">intenta refutar</text>
+<text x="396" y="438" font-size="12" fill="#9aa7ab">cada hallazgo</text>
+<rect x="550" y="380" width="154" height="72" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="562" y="406" font-size="13.5" font-weight="600" fill="#e8eceb">Corrección</text>
+<text x="562" y="423" font-size="12" fill="#9aa7ab">revisión del parche,</text>
+<text x="562" y="438" font-size="12" fill="#9aa7ab">pull request</text>
+<path d="M207.5 416 H216" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<path d="M373.5 416 H382" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<path d="M539.5 416 H548" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<path d="M146 468 V488" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<rect x="38" y="490" width="216" height="60" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="50" y="517.5" font-size="13.5" font-weight="600" fill="#e8eceb">Hallazgos y evidencia</text>
+<text x="50" y="534.5" font-size="12" fill="#9aa7ab">verificados y con seguimiento</text>
+<rect x="270" y="490" width="216" height="60" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="282" y="517.5" font-size="13.5" font-weight="600" fill="#e8eceb">Informes</text>
+<text x="282" y="534.5" font-size="12" fill="#9aa7ab">Markdown · PDF · SARIF</text>
+<rect x="502" y="490" width="216" height="60" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="514" y="517.5" font-size="13.5" font-weight="600" fill="#e8eceb">Entrega a Jira</text>
+<text x="514" y="534.5" font-size="12" fill="#9aa7ab">prioridades y vencimientos</text>
+<path d="M255.5 520 H268" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<path d="M487.5 520 H500" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<text x="772" y="204" font-size="10.5" font-weight="600" letter-spacing="1.1" fill="#9aa7ab">FUERA DEL SERVIDOR</text>
+<rect x="772" y="216" width="208" height="56" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="784" y="241.5" font-size="13.5" font-weight="600" fill="#e8eceb">Tu proveedor de modelos</text>
+<text x="784" y="258.5" font-size="12" fill="#9aa7ab">alojado, gateway o local</text>
+<rect x="772" y="284" width="208" height="56" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="784" y="309.5" font-size="13.5" font-weight="600" fill="#e8eceb">Objetivos autorizados</text>
+<text x="784" y="326.5" font-size="12" fill="#9aa7ab">solo lo que está en alcance</text>
+<rect x="772" y="388" width="208" height="56" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="784" y="413.5" font-size="13.5" font-weight="600" fill="#e8eceb">GitHub</text>
+<text x="784" y="430.5" font-size="12" fill="#9aa7ab">clonado, pull requests</text>
+<rect x="772" y="492" width="208" height="56" rx="9" fill="#1e2529" stroke="#2b363b" stroke-width="1.2"/>
+<text x="784" y="517.5" font-size="13.5" font-weight="600" fill="#e8eceb">Jira Cloud</text>
+<text x="784" y="534.5" font-size="12" fill="#9aa7ab">épica por tarea, issue por hallazgo</text>
+<path d="M719.5 244 H770" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<path d="M705.5 312 H770" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<path d="M705.5 416 H770" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)" marker-start="url(#tail)"/>
+<path d="M719.5 520 H770" fill="none" stroke="#53c5be" stroke-width="1.6" stroke-linecap="round" marker-end="url(#head)"/>
+<path d="M135 570 V598" fill="none" stroke="#2b363b" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2 5"/>
+<rect x="20" y="600" width="230" height="60" rx="9" fill="#12181b" stroke="#2b363b" stroke-width="1.2"/>
+<text x="32" y="627.5" font-size="13.5" font-weight="600" fill="#e8eceb">PostgreSQL</text>
+<text x="32" y="644.5" font-size="12" fill="#9aa7ab">tareas, hallazgos, auditoría</text>
+<path d="M378 570 V598" fill="none" stroke="#2b363b" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2 5"/>
+<rect x="263" y="600" width="230" height="60" rx="9" fill="#12181b" stroke="#2b363b" stroke-width="1.2"/>
+<text x="275" y="627.5" font-size="13.5" font-weight="600" fill="#e8eceb">data/</text>
+<text x="275" y="644.5" font-size="12" fill="#9aa7ab">archivos de tarea y evidencia</text>
+<path d="M621 570 V598" fill="none" stroke="#2b363b" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2 5"/>
+<rect x="506" y="600" width="230" height="60" rx="9" fill="#12181b" stroke="#2b363b" stroke-width="1.2"/>
+<text x="518" y="627.5" font-size="13.5" font-weight="600" fill="#e8eceb">Claves</text>
+<text x="518" y="644.5" font-size="12" fill="#9aa7ab">fuera del directorio de datos</text>
+</svg>

@@ -1,0 +1,1 @@
+Synthetic, public TLS test fixture only. This key is intentionally committed and must never be used for a real service. The certificate covers only 127.0.0.1; localhost is deliberately excluded for hostname-mismatch tests. Valid 2020-2040. Generated locally with cryptography; running the tests needs only Python standard-library modules.

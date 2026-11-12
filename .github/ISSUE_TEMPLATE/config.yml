@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/Philocyber/counterweight/security/advisories/new
+    about: Please report vulnerabilities privately, not in public issues.
+  - name: Documentation
+    url: https://github.com/Philocyber/counterweight/blob/main/docs/README.md
+    about: Setup, configuration, operations and troubleshooting guides.

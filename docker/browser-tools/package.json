@@ -1,0 +1,11 @@
+{
+  "name": "counterweight-browser-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pinned browser tooling for the Counterweight image",
+  "dependencies": {
+    "@playwright/cli": "0.1.24",
+    "@playwright/mcp": "0.0.85",
+    "playwright": "1.65.0"
+  }
+}

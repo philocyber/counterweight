@@ -1,0 +1,63 @@
+name: Counterweight pull request review
+description: Reviews the pull request's code for security problems with a self-hosted Counterweight instance and reports the results in the job.
+author: Counterweight
+
+inputs:
+  instance-url:
+    description: Address of the Counterweight instance, for example https://counterweight.example.com. Must be reachable from the runner.
+    required: true
+  api-token:
+    description: Counterweight API token (starts with cwt_) with the reviews:write and reviews:read scopes. Store it as a secret.
+    required: true
+  depth:
+    description: Review depth, light, balanced or comprehensive.
+    required: false
+    default: balanced
+  fail-on:
+    description: Fail the job when a finding at or above this severity is inside the change. One of none, low, medium, high, critical.
+    required: false
+    default: none
+  upload-sarif:
+    description: Upload the results to GitHub code scanning. Needs the security-events write permission.
+    required: false
+    default: "true"
+  comment:
+    description: Create or update one pull request comment with the summary. Needs the pull-requests write permission.
+    required: false
+    default: "false"
+  timeout:
+    description: Seconds to wait for the review to finish.
+    required: false
+    default: "1800"
+  allow-insecure:
+    description: Accept an http:// instance address. Only for a trusted network.
+    required: false
+    default: "false"
+
+outputs:
+  review-id:
+    description: Id of the review on the instance.
+    value: ${{ steps.review.outputs.review-id }}
+
+runs:
+  using: composite
+  steps:
+    - id: review
+      shell: sh
+      env:
+        CW_URL: ${{ inputs.instance-url }}
+        CW_TOKEN: ${{ inputs.api-token }}
+        CW_DEPTH: ${{ inputs.depth }}
+        CW_FAIL_ON: ${{ inputs.fail-on }}
+        CW_COMMENT: ${{ inputs.comment }}
+        CW_TIMEOUT: ${{ inputs.timeout }}
+        CW_ALLOW_INSECURE: ${{ inputs.allow-insecure }}
+        GH_TOKEN: ${{ github.token }}
+      run: sh "${GITHUB_ACTION_PATH}/review.sh"
+
+    # Pinned to a full commit SHA; the trailing comment names the release it is.
+    - if: ${{ always() && inputs.upload-sarif == 'true' && steps.review.outputs.sarif != '' }}
+      uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+      with:
+        sarif_file: ${{ steps.review.outputs.sarif }}
+        category: counterweight

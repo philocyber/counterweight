@@ -1,0 +1,136 @@
+name: checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  agent-adapter:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: counterweight_test
+          POSTGRES_PASSWORD: test_only_password
+          POSTGRES_DB: counterweight_adapter_e2e
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U counterweight_test -d counterweight_adapter_e2e"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: adapters/agent/package-lock.json
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: npm ci
+        working-directory: adapters/agent
+      - run: npm test && npm run check
+        working-directory: adapters/agent
+      - name: Test adapter against real backend
+        env:
+          COUNTERWEIGHT_ADAPTER_E2E: "1"
+          COUNTERWEIGHT_PG_DSN: postgres://counterweight_test:test_only_password@localhost:5432/counterweight_adapter_e2e?sslmode=disable
+        run: go test ./server -run '^TestAgentAdapterE2E$' -count=1 -v
+  publication-audit:
+    # Fails when a change would publish private runtime files, machine-specific
+    # home paths or internal identifiers.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+      - run: node tools/audit-publication.mjs
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+        working-directory: web
+      - run: npx tsc --noEmit
+        working-directory: web
+      - run: npm run lint
+        working-directory: web
+      - run: npm test
+        working-directory: web
+      - run: npm run build:static
+        working-directory: web
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: counterweight_test
+          POSTGRES_PASSWORD: test_only_password
+          POSTGRES_DB: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U counterweight_test -d postgres"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Check shell syntax
+        run: |
+          for script in *.sh; do bash -n "$script"; done
+          sh -n start.sh
+      # traffic/wal_vfs.go implements a SQLite VFS and converts pointers on purpose.
+      - name: Vet
+        run: go vet -unsafeptr=false ./...
+      - name: Run all Go packages with separate disposable databases
+        env:
+          PGHOST: localhost
+          PGPORT: "5432"
+          PGUSER: counterweight_test
+          PGPASSWORD: test_only_password
+        run: |
+          set -euo pipefail
+          psql -d postgres -c 'SELECT 1'
+          # Initialize the supplementary tables created during normal server startup.
+          cat > "$RUNNER_TEMP/init-test-db.go" <<'GO'
+          package main
+          import (
+            "log"
+            "os"
+            "github.com/Philocyber/counterweight/db"
+          )
+          func main() {
+            store, err := db.Open(os.Getenv("COUNTERWEIGHT_PG_DSN"))
+            if err != nil { log.Fatal(err) }
+            defer store.Close()
+            if err := store.EnsureLLMUsageTable(); err != nil { log.Fatal(err) }
+            if err := store.EnsureLLMRecordsTable(); err != nil { log.Fatal(err) }
+          }
+          GO
+          go build -o "$RUNNER_TEMP/init-test-db" "$RUNNER_TEMP/init-test-db.go"
+          index=0
+          status=0
+          while IFS= read -r package; do
+            index=$((index + 1))
+            # Test binaries only open a database whose name ends in "_test".
+            database="counterweight_${index}_test"
+            createdb "$database"
+            COUNTERWEIGHT_PG_DSN="postgres://${PGUSER}:${PGPASSWORD}@localhost:5432/${database}?sslmode=disable" "$RUNNER_TEMP/init-test-db"
+            if ! COUNTERWEIGHT_PG_DSN="postgres://${PGUSER}:${PGPASSWORD}@localhost:5432/${database}?sslmode=disable" go test -p 1 "$package" -count=1; then
+              status=1
+            fi
+            dropdb --force "$database"
+          done < <(go list ./...)
+          exit "$status"

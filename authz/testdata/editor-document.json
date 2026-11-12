@@ -1,0 +1,294 @@
+{
+  "version": 1,
+  "target": {
+    "base_url": "https://staging.example.test",
+    "timeout_seconds": 20
+  },
+  "personas": [
+    {
+      "key": "anonymous"
+    },
+    {
+      "key": "viewer",
+      "login": {
+        "request": {
+          "method": "POST",
+          "path": "/api/login",
+          "json": {
+            "password": "${account:viewer.password}",
+            "tenant": "acme",
+            "username": "${account:viewer.username}"
+          },
+          "form": null
+        },
+        "status": [
+          200
+        ],
+        "token": {
+          "json_pointer": "/token",
+          "header": "Authorization",
+          "prefix": "Bearer "
+        }
+      },
+      "identity": {
+        "request": {
+          "method": "GET",
+          "path": "/api/me",
+          "form": null
+        },
+        "status": [
+          200
+        ],
+        "body_contains": [
+          "${account:viewer.username}"
+        ]
+      }
+    },
+    {
+      "key": "editor",
+      "login": {
+        "request": {
+          "method": "POST",
+          "path": "/session",
+          "form": {
+            "pass": "${account:editor.password}",
+            "user": "${account:editor.username}"
+          }
+        },
+        "status": [
+          200,
+          302
+        ]
+      },
+      "identity": {
+        "request": {
+          "method": "GET",
+          "path": "/api/me",
+          "headers": {
+            "Accept": "application/json"
+          },
+          "form": null
+        },
+        "status": [
+          200
+        ],
+        "body_contains": [
+          "\"role\":\"editor\"",
+          "it's: here # not a comment"
+        ]
+      }
+    },
+    {
+      "key": "admin",
+      "role": "Administrator (tenant A)",
+      "headers": {
+        "X-Api-Key": "${account:admin.token}"
+      },
+      "identity": {
+        "request": {
+          "method": "GET",
+          "path": "/api/me",
+          "form": null
+        },
+        "status": [
+          200
+        ],
+        "body_contains": [
+          "yes"
+        ]
+      }
+    },
+    {
+      "key": "007",
+      "headers": {
+        "Authorization": "Bearer ${account:007.token}"
+      },
+      "identity": {
+        "request": {
+          "method": "GET",
+          "path": "/api/me",
+          "form": null
+        },
+        "status": [
+          200
+        ],
+        "body_contains": [
+          "null"
+        ]
+      }
+    }
+  ],
+  "cases": [
+    {
+      "id": "projects-list",
+      "request": {
+        "method": "GET",
+        "path": "/api/projects",
+        "form": null
+      },
+      "expect": {
+        "007": {
+          "allow": [
+            200
+          ]
+        },
+        "admin": {
+          "allow": [
+            200
+          ]
+        },
+        "anonymous": {
+          "deny": [
+            401,
+            403
+          ]
+        },
+        "editor": {
+          "allow": [
+            200
+          ]
+        },
+        "viewer": {
+          "allow": [
+            200
+          ]
+        }
+      }
+    },
+    {
+      "id": "report-update",
+      "allow_write": true,
+      "request": {
+        "method": "PUT",
+        "path": "/api/reports/r1?draft=true",
+        "headers": {
+          "X-Trace": "a b"
+        },
+        "json": {
+          "nested": {
+            "n": -3,
+            "ok": true
+          },
+          "pages": 12,
+          "ratio": 0.5,
+          "tags": [
+            "a",
+            "true",
+            null
+          ],
+          "title": "Quarterly: summary"
+        },
+        "form": null
+      },
+      "expect": {
+        "007": {
+          "deny": [
+            403
+          ]
+        },
+        "admin": {
+          "allow": [
+            200,
+            204
+          ]
+        },
+        "anonymous": {
+          "deny": [
+            401
+          ]
+        },
+        "editor": {
+          "deny": [
+            302
+          ],
+          "location_contains": "/login"
+        },
+        "viewer": {
+          "deny": [
+            200
+          ],
+          "body_contains": [
+            "Access denied"
+          ],
+          "body_not_contains": [
+            "Saved"
+          ]
+        }
+      }
+    },
+    {
+      "id": "purge",
+      "allow_write": true,
+      "deny_all": true,
+      "request": {
+        "method": "POST",
+        "path": "/api/purge",
+        "form": {}
+      },
+      "expect": {
+        "007": {
+          "deny": [
+            403
+          ]
+        },
+        "admin": {
+          "deny": [
+            403
+          ]
+        },
+        "anonymous": {
+          "deny": [
+            401
+          ]
+        },
+        "editor": {
+          "deny": [
+            403
+          ]
+        },
+        "viewer": {
+          "deny": [
+            403
+          ]
+        }
+      }
+    },
+    {
+      "id": "export",
+      "allow_write": true,
+      "request": {
+        "method": "POST",
+        "path": "/api/export",
+        "form": null,
+        "body": "a=1\u0026b=two words"
+      },
+      "expect": {
+        "007": {
+          "allow": [
+            200
+          ]
+        },
+        "admin": {
+          "allow": [
+            200
+          ]
+        },
+        "anonymous": {
+          "deny": [
+            401
+          ]
+        },
+        "editor": {
+          "deny": [
+            403
+          ]
+        },
+        "viewer": {
+          "deny": [
+            403
+          ]
+        }
+      }
+    }
+  ]
+}

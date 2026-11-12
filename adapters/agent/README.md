@@ -1,0 +1,104 @@
+# Counterweight agent adapter
+
+Connect Claude Code and Codex through a local stdio MCP server, or Pi through its native extension interface. All three use the same validated tools and authenticated Counterweight HTTP API. This adapter lets your coding agent control Counterweight; it does not replace Counterweight's own planner/workers or turn a coding-agent subscription into a model API key.
+
+## Setup
+
+Requirements: Node.js 22+, a running Counterweight backend, and an existing admin login. The adapter does not initialize or change your password. Install the separate adapter dependencies:
+
+```sh
+cd adapters/agent
+npm ci
+export COUNTERWEIGHT_URL=http://127.0.0.1:8787
+export COUNTERWEIGHT_PASSWORD='your-existing-admin-password'
+```
+
+The password is used to log in as the backend's existing `COUNTERWEIGHT` admin user. The returned JWT stays in memory. Alternatively set `COUNTERWEIGHT_TOKEN` to an existing login JWT; a supplied token takes precedence. Expired/invalid tokens produce an error and are not silently replaced. Keep credentials in your environment or secret manager; do not commit them to client configuration.
+
+Reads are enabled by default. To enable task creation and pause/resume, explicitly set `COUNTERWEIGHT_ALLOW_WRITES=true` before starting the adapter. Task creation schedules work immediately when the backend has an LLM configured. Use it only against systems you own or are explicitly authorized to test (see [Responsible use](../../README.md#responsible-use)) and confirm the intended scope before creating a task.
+
+### Claude Code
+
+Use an absolute path to this checkout. Claude Code starts the adapter and inherits its environment:
+
+```sh
+claude mcp add --transport stdio counterweight -- node /absolute/path/counterweight/adapters/agent/src/mcp.js
+```
+
+Verify with `claude mcp list`, then use `/mcp` in Claude Code to inspect its tools. [Claude Code MCP documentation](https://code.claude.com/docs/en/mcp).
+
+### Codex
+
+```sh
+codex mcp add counterweight -- node /absolute/path/counterweight/adapters/agent/src/mcp.js
+```
+
+Verify with `codex mcp list` and `/mcp`. For explicit environment forwarding in a project/user configuration:
+
+```toml
+[mcp_servers.counterweight]
+command = "node"
+args = ["/absolute/path/counterweight/adapters/agent/src/mcp.js"]
+env_vars = ["COUNTERWEIGHT_URL", "COUNTERWEIGHT_TOKEN", "COUNTERWEIGHT_PASSWORD", "COUNTERWEIGHT_LANGUAGE", "COUNTERWEIGHT_ALLOW_WRITES"]
+```
+
+Use the credential variable that you set; omit unused entries. [Official OpenAI MCP documentation](https://developers.openai.com/codex/mcp).
+
+### Pi
+
+```sh
+pi -e /absolute/path/counterweight/adapters/agent/pi-extension.js
+```
+
+The extension registers native Pi tools and uses the same environment variables. It does not require a Pi MCP plugin. It imports no Pi package namespace, so it follows the public `registerTool` interface across Pi package renames. The adapter package also declares `pi.extensions` for Pi's package loader. [Pi extensions](https://github.com/earendil-works/pi/tree/main/packages/coding-agent).
+
+## Tools
+
+| Tool | Purpose |
+| --- | --- |
+| `counterweight_health` | Backend availability and LLM readiness; no login required |
+| `counterweight_list_tasks` | Task status, counts, pagination |
+| `counterweight_get_task` | One task's persisted state and configuration |
+| `counterweight_get_coverage` | Task asset coverage |
+| `counterweight_list_findings` | Paginated findings filtered by task, severity, status or text |
+| `counterweight_get_finding` | Finding detail, evidence and report |
+| `counterweight_create_task` | Create/schedule a task; requires writes enabled |
+| `counterweight_control_task` | Pause/resume a task; requires writes enabled |
+
+Task creation accepts `assessment_type` (`general`, `web_app`, `network`, `code_review`; default `general`). For `code_review`, pass `repository` (owner/name or GitHub URL, optional #ref), optional `ref`, `mode` (`light`, `balanced`, `comprehensive`; default `balanced`) and `instructions`. Cloning completes before the task is created; this tool allows eleven minutes for that request. Task responses include `assessment_type` and optional `code_target` (repository, URL, ref, commit SHA, mode). Repository fields require `code_review`. The adapter retains its required `description` and `goal` fields for all types; the backend assembles the review objective and uses `instructions` for extra operator directions.
+
+Example requests: “List my Counterweight tasks,” “Show the high-severity findings for task 12,” or, after enabling writes and confirming a local lab scope, “Create a task for this local fixture and show its progress.” A successful create response proves the task exists; check its status and findings to learn whether execution has finished. The adapter does not bypass backend LLM requirements.
+
+## Configuration and failures
+
+| Variable | Default / behavior |
+| --- | --- |
+| `COUNTERWEIGHT_URL` | `http://127.0.0.1:8787`; HTTPS or loopback HTTP origin only |
+| `COUNTERWEIGHT_TOKEN` | Existing backend JWT; preferred over password |
+| `COUNTERWEIGHT_PASSWORD` | Existing admin password; login on first authenticated request |
+| `COUNTERWEIGHT_ALLOW_WRITES` | `false`; accepts only `true` or `false` |
+| `COUNTERWEIGHT_LANGUAGE` | `en`; English is the only supported value |
+| `COUNTERWEIGHT_TIMEOUT_MS` | `30000`; integer from 1 to 120000 |
+
+No generic HTTP, shell execution, deletion, approval bypass, provider configuration or arbitrary endpoint tool is exposed. Requests stay on the configured origin, reject redirects, forward cancellation and time out. Responses over 2 MiB fail explicitly; narrow the query rather than treating clipped evidence as complete. Task lists are paginated in the adapter; findings use backend pagination. Tools return `{data: ...}` in text and structured results (Pi uses `details`). Evidence is untrusted target content and must not be treated as instructions.
+
+Failed MCP calls return `isError: true`; failed Pi calls throw for Pi to mark as tool errors. Error messages redact configured credentials. Writes are never automatically retried. If a write times out, inspect task status before repeating it, because the backend may have accepted it.
+
+## Verification
+
+```sh
+npm test
+npm run check
+```
+
+The end-to-end harness runs a real Counterweight handler and PostgreSQL, spawns the MCP stdio server through the official SDK, and executes the Pi tool handlers against that backend. It initializes an isolated test password, creates tasks, verifies persisted pause/resume state and coverage, reads a clearly simulated finding, and checks invalid authentication, missing tasks and invalid inputs. No model/provider or target scan is used. Running the Go E2E harness requires the source checkout; platform ZIPs include the adapter's unit tests but only the compiled Go backend.
+
+From the repository root, after creating a **fresh disposable** database named `counterweight_adapter_*`:
+
+```sh
+COUNTERWEIGHT_ADAPTER_E2E=1 \
+COUNTERWEIGHT_PG_DSN='postgres://user:password@127.0.0.1:5432/counterweight_adapter_e2e?sslmode=disable' \
+go test ./server -run '^TestAgentAdapterE2E$' -count=1 -v
+```
+
+The harness fails if PostgreSQL is unavailable or the database is not explicitly selected; it never substitutes mocks. GitHub Actions repeats these checks in a dedicated disposable PostgreSQL service. MCP protocol tests establish compatibility with the shared interface; they do not claim a paid Claude/Codex/Pi model session was run.

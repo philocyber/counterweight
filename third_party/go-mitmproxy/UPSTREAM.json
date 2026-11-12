@@ -1,0 +1,127 @@
+{
+  "module": "github.com/lqqyt2423/go-mitmproxy",
+  "version": "v1.9.2",
+  "moduleSum": "h1:+QTbDyUUaVRmEavPq0/eWzJ2K+K4JdL4ff91s/adnxk=",
+  "files": [
+    {
+      "path": "proxy/addon.go",
+      "sha256": "d90ec8eb947ec0491b34fa8f201cb03a437a3488d15c7e8495190040f97269b1"
+    },
+    {
+      "path": "proxy/attacker.go",
+      "sha256": "9509f0c2dfbcb036d5e2f22192754964f56825b015bab819b46697dd314b6341"
+    },
+    {
+      "path": "proxy/attacker_http2_test.go",
+      "sha256": "07befd2102caf6f3e4c070049da7b0c9f559341950723799c4d46e018bb4210f"
+    },
+    {
+      "path": "proxy/connection.go",
+      "sha256": "2ca9f69638d8220d3f621398b3d81428c62a87eea7d0927abd6bc8483ba1777b"
+    },
+    {
+      "path": "proxy/connection_test.go",
+      "sha256": "c5b8c9a1e774540be111a18705a3c9cb4b7bab40fd7b7ed3834f216545cac325"
+    },
+    {
+      "path": "proxy/entry.go",
+      "sha256": "d1167cf19e3d206693e670b54f5e9e400af5622d7726bc6413eb486f8f121bb5"
+    },
+    {
+      "path": "proxy/flow.go",
+      "sha256": "b2397fa5fa2ec952eee476ea86bcfef7bbbd5843cb12311527ba9f89e43e3f07"
+    },
+    {
+      "path": "proxy/flowencoding.go",
+      "sha256": "3104eaf65d51768541a1c47ab541826273af9cbf9fa610057d508eaa3b4b4792"
+    },
+    {
+      "path": "proxy/helper.go",
+      "sha256": "5f6638341e6664b08707318e2f40b336ad365b4d39cc93e4d5e0f29f11670548"
+    },
+    {
+      "path": "proxy/instance_logger.go",
+      "sha256": "1821f0acd012eb1856ee7a38ff11aab6c686939eb0ac0478262025c079cd67a2"
+    },
+    {
+      "path": "proxy/instance_log_addon.go",
+      "sha256": "197cc2a74d2ea3e2e10872ffe7627a90a92e931320ead0c2a9db88cf0eaf40a9"
+    },
+    {
+      "path": "proxy/proxy.go",
+      "sha256": "6bdaae2118f4bd2b326eaf11ed1090b4b5eb6ffcf1d0fab22fe2ee60a5d7fb7f"
+    },
+    {
+      "path": "proxy/proxy_test.go",
+      "sha256": "36c608c181cf14ba04557ef2d5ee64b4134d3b3c80a96907c5bb190e62348e98"
+    },
+    {
+      "path": "proxy/sse.go",
+      "sha256": "9784faa1854017bad9d2b4e086911ce47cdef829f711044b03bb7aba9f63ff51"
+    },
+    {
+      "path": "proxy/sse_hook_test.go",
+      "sha256": "338f1bf513e34e54f9620c10652b52bb9c2605c126dbe65a0de55abff39b1544"
+    },
+    {
+      "path": "proxy/sse_realtime_test.go",
+      "sha256": "03fb44955bf218f603869678c524c44dcc920a67dd1e89111dcea2f47b6683b6"
+    },
+    {
+      "path": "proxy/sse_test.go",
+      "sha256": "a0d20e455dc20a6b7e52a12acab29a6603a075ac2f15c5d214179b64f1b92647"
+    },
+    {
+      "path": "proxy/websocket.go",
+      "sha256": "ad5e530c1f6e7b85a420c6691078f39b841356934c3ac475b6976f06250f45c3"
+    },
+    {
+      "path": "proxy/websocket_test.go",
+      "sha256": "85e391149514be893afbaf658a29c18d581d04bef40cab35ac3c435c82b83401"
+    },
+    {
+      "path": "cert/ca.go",
+      "sha256": "be69a310aaf58298667e2d6580d0b30231d9d1dcc46ea5c921a5d17fbf7c9013"
+    },
+    {
+      "path": "cert/self_sign_ca.go",
+      "sha256": "aca3a17ce9153025797944c3516c3f4e8e28d6a60dee1228df522234d2451139"
+    },
+    {
+      "path": "cert/self_sign_ca_test.go",
+      "sha256": "2f76fb6af7e44dd093bb4b8d5b289111485b45f371859614bf96ed079b1c4f0b"
+    },
+    {
+      "path": "internal/helper/helper.go",
+      "sha256": "8bee9be2c731f666baabe03efdf79ec5d3fee2ca9a09a42fadda0a2071efe3d2"
+    },
+    {
+      "path": "internal/helper/host.go",
+      "sha256": "e9e640134b12a3f858ce26697bd7682f6220616763aae8338354bc71d78b0544"
+    },
+    {
+      "path": "internal/helper/host_test.go",
+      "sha256": "d95a070ba5f4f0be93ca847be08e24c1a90d188351d545d998fb96dc86741ee1"
+    },
+    {
+      "path": "internal/helper/proxy.go",
+      "sha256": "8118da1595505638a82f16faf23e6291b80aecfb2864a76a36742c3bbedfcb67"
+    },
+    {
+      "path": "internal/helper/tls.go",
+      "sha256": "7c5f395c108ddb808813d80ad43b20cbb6e5a506b36d4f9c25b7d61be47d1443"
+    },
+    {
+      "path": "go.mod",
+      "sha256": "c32d593fa2a2ecbe6c556f43212cc1c53f24ded9a77969d08c3dc7e1428a4472"
+    },
+    {
+      "path": "go.sum",
+      "sha256": "ab40a14e7611b1b3818edb0f09d7e91b507e046ddd798a1757d5951ff59cbd16"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "1d5e311691f3108308407de750d28e63799c863af9b4390343bfdecdb1c49796"
+    }
+  ]
+}

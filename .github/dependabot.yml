@@ -1,0 +1,48 @@
+version: 2
+# Version update pull requests are paused (open-pull-requests-limit: 0): updates
+# are taken by hand until the first release settles. Security alerts and
+# security update pull requests are not affected. Remove the limit on an entry
+# to get its weekly pull requests back.
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    groups:
+      go:
+        patterns: ["*"]
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    groups:
+      web:
+        patterns: ["*"]
+        update-types: [minor, patch]
+  - package-ecosystem: npm
+    directory: /adapters/agent
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+  - package-ecosystem: github-actions
+    directory: /actions/review
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+  - package-ecosystem: npm
+    directory: /docker/browser-tools
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0

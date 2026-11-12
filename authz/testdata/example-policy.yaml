@@ -1,0 +1,85 @@
+# Example policy for `counterweight authz`. It describes a small API with two
+# tenants: tenant A owns the document, user B belongs to another tenant.
+# The tests of the authz package run this file against a local fixture.
+version: 1
+
+target:
+  base_url: ${env:AUTHZ_BASE_URL}
+  # Only because the fixture listens on loopback. Leave it out for a real target.
+  allow_plain_http: true
+
+personas:
+  anonymous: {}
+
+  # Logs in with a JSON request; the token of the answer goes into a header.
+  user_a:
+    login:
+      request:
+        method: POST
+        path: /api/login
+        json: { email: a@tenant-a.test, password: "${env:AUTHZ_USER_A_PASSWORD}" }
+      token: { json_pointer: /token, prefix: "Bearer " }
+    identity:
+      request: { method: GET, path: /api/me }
+      body_contains: ['"email":"a@tenant-a.test"']
+
+  # Logs in with a form; the session cookie of the answer is kept.
+  user_b:
+    login:
+      request:
+        method: POST
+        path: /session
+        form: { email: b@tenant-b.test, password: "${env:AUTHZ_USER_B_PASSWORD}" }
+      status: 204
+    identity:
+      request: { method: GET, path: /api/me }
+      body_contains: ['"email":"b@tenant-b.test"']
+
+  # Uses a long-lived token taken from the environment.
+  admin:
+    headers:
+      Authorization: "Bearer ${env:AUTHZ_ADMIN_TOKEN}"
+    identity:
+      request: { method: GET, path: /api/me }
+      body_contains: ['"role":"admin"']
+
+cases:
+  - id: admin-users
+    request: { method: GET, path: /api/admin/users }
+    expect:
+      anonymous: { deny: 401 }
+      user_a: { deny: 403 }
+      user_b: { deny: 403 }
+      admin: { allow: 200 }
+
+  # Another tenant gets 404, not 403: the API hides that the document exists.
+  - id: doc-a-read
+    request: { method: GET, path: "/api/docs/${env:AUTHZ_DOC_A_ID}" }
+    expect:
+      anonymous: { deny: 401 }
+      user_a: { allow: 200, body_contains: ['"tenant":"a"'] }
+      user_b: { deny: 404 }
+      admin: { allow: 200 }
+
+  # A request that changes data needs allow_write. Denied personas are sent first.
+  - id: doc-a-update
+    allow_write: true
+    request:
+      method: PUT
+      path: "/api/docs/${env:AUTHZ_DOC_A_ID}"
+      json: { title: authz-check }
+    expect:
+      anonymous: { deny: 401 }
+      user_a: { allow: 200 }
+      user_b: { deny: 404 }
+      admin: { allow: 200 }
+
+  # Nobody may reach this route, so there is no allowed persona to compare with.
+  - id: debug-config
+    deny_all: true
+    request: { method: GET, path: /api/debug/config }
+    expect:
+      anonymous: { deny: 404 }
+      user_a: { deny: 404 }
+      user_b: { deny: 404 }
+      admin: { deny: 404 }

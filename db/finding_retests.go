@@ -1,0 +1,388 @@
+package db
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"github.com/Philocyber/counterweight/locale"
+	"strings"
+	"time"
+)
+
+const FindingRetestAgentKey = "retester"
+
+// CodeVerifierAgentKey is the conversation agent that independently verifies
+// findings recorded by white-box code review tasks.
+const CodeVerifierAgentKey = "codeverifier"
+
+const (
+	RetestKindRetest = "retest"
+	RetestKindVerify = "verify"
+)
+
+var ErrRetestNotRunning = locale.NewError("This retest has ended or has not started; start a new retest from the finding details")
+
+// FindingRetest is an immutable historical test once its conversation turn ends.
+// Snapshot is only loaded for the agent, never sent with the history list.
+type FindingRetest struct {
+	ID             int64           `json:"id"`
+	FindingID      int64           `json:"finding_id"`
+	ConversationID *int64          `json:"conversation_id"`
+	Status         string          `json:"status"`
+	Verdict        string          `json:"verdict"`
+	Notes          string          `json:"notes"`
+	Snapshot       json.RawMessage `json:"snapshot,omitempty"`
+	Summary        string          `json:"summary"`
+	Evidence       string          `json:"evidence"`
+	Error          string          `json:"error"`
+	CreatedAt      time.Time       `json:"created_at"`
+	StartedAt      *time.Time      `json:"started_at"`
+	FinishedAt     *time.Time      `json:"finished_at"`
+	// Kind is RetestKindRetest (manual live retest) or RetestKindVerify
+	// (automatic independent verification of a code-review finding).
+	Kind string `json:"kind"`
+}
+
+const retestCols = `id, finding_id, conversation_id, status, verdict, notes, summary, evidence, error, created_at, started_at, finished_at, kind`
+
+// ActiveFindingRetest is the small status payload polled by the findings list.
+// Finding IDs use the same string representation as the findings API.
+type ActiveFindingRetest struct {
+	ID             int64  `json:"id"`
+	FindingID      int64  `json:"finding_id,string"`
+	ConversationID int64  `json:"conversation_id"`
+	Status         string `json:"status"`
+}
+
+func (d *DB) ListActiveFindingRetests(ctx context.Context) ([]ActiveFindingRetest, error) {
+	rows, err := d.QueryContext(ctx, `SELECT id, finding_id, conversation_id, status FROM finding_retests
+	WHERE status IN ('pending','running') AND conversation_id IS NOT NULL AND kind IN ('retest','verify') ORDER BY id`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ActiveFindingRetest{}
+	for rows.Next() {
+		var item ActiveFindingRetest
+		if err := rows.Scan(&item.ID, &item.FindingID, &item.ConversationID, &item.Status); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, rows.Err()
+}
+
+func scanRetest(row interface{ Scan(...any) error }) (*FindingRetest, error) {
+	r := &FindingRetest{}
+	err := row.Scan(&r.ID, &r.FindingID, &r.ConversationID, &r.Status, &r.Verdict, &r.Notes,
+		&r.Summary, &r.Evidence, &r.Error, &r.CreatedAt, &r.StartedAt, &r.FinishedAt, &r.Kind)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	return r, err
+}
+
+// CreateFindingRetest atomically snapshots the source, creates its conversation
+// and persists the first message. A finding row lock deduplicates simultaneous
+// clicks across clients; an existing active run is returned without dispatching.
+func (d *DB) CreateFindingRetest(ctx context.Context, findingID int64, notes string) (*FindingRetest, *Conversation, bool, error) {
+	lang := locale.FromContext(ctx)
+	return d.createFindingRun(ctx, findingID, findingRunSpec{
+		kind: RetestKindRetest, agentKey: FindingRetestAgentKey, notes: notes,
+		convTitle:   func(title string) string { return locale.Text(lang, "Retest #%d · %s", findingID, title) },
+		userSummary: locale.Text(lang, "Please retest finding #%d", findingID),
+		message:     func(r *FindingRetest) string { return r.InitialMessageForLanguage(lang) },
+	})
+}
+
+// CreateFindingVerification queues the single independent verification of a
+// code-review finding. A finding is verified once: an active or completed
+// verification is returned with created=false; a failed or stopped one may be
+// replaced. It shares the per-finding active-run lock with retests.
+func (d *DB) CreateFindingVerification(ctx context.Context, findingID int64) (*FindingRetest, *Conversation, bool, error) {
+	lang := locale.FromContext(ctx)
+	return d.createFindingRun(ctx, findingID, findingRunSpec{
+		kind: RetestKindVerify, agentKey: CodeVerifierAgentKey, skipIfVerified: true,
+		convTitle:   func(title string) string { return locale.Text(lang, "Verify #%d · %s", findingID, title) },
+		userSummary: locale.Text(lang, "Please independently verify finding #%d", findingID),
+		message:     func(r *FindingRetest) string { return r.VerificationMessage(lang) },
+	})
+}
+
+// CreateManualFindingVerification queues a verification the operator asked for: it
+// runs even when the finding was verified before (the newest verdict then applies),
+// but never alongside another active run of the finding.
+func (d *DB) CreateManualFindingVerification(ctx context.Context, findingID int64) (*FindingRetest, *Conversation, bool, error) {
+	lang := locale.FromContext(ctx)
+	return d.createFindingRun(ctx, findingID, findingRunSpec{
+		kind: RetestKindVerify, agentKey: CodeVerifierAgentKey,
+		convTitle:   func(title string) string { return locale.Text(lang, "Verify #%d · %s", findingID, title) },
+		userSummary: locale.Text(lang, "Please independently verify finding #%d", findingID),
+		message:     func(r *FindingRetest) string { return r.VerificationMessage(lang) },
+	})
+}
+
+type findingRunSpec struct {
+	kind, agentKey, notes string
+	// parentID links a patch_review run to the mitigate run it reviews.
+	parentID *int64
+	// skipIfVerified returns an existing pending/running/completed verify run.
+	skipIfVerified bool
+	convTitle      func(title string) string
+	userSummary    string
+	message        func(*FindingRetest) string
+}
+
+func (d *DB) createFindingRun(ctx context.Context, findingID int64, spec findingRunSpec) (*FindingRetest, *Conversation, bool, error) {
+	tx, err := d.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, nil, false, err
+	}
+	defer tx.Rollback()
+	var title string
+	var snapshot []byte
+	err = tx.QueryRowContext(ctx, `SELECT COALESCE(NULLIF(f.name,''), NULLIF(f.vulnclass,''), $2),
+	jsonb_build_object('finding', to_jsonb(f),
+	 'assets', COALESCE((SELECT jsonb_agg(to_jsonb(a)) FROM assets a WHERE f.asset_ids @> to_jsonb(ARRAY[a.id])), '[]'::jsonb),
+	 'constraints', COALESCE((SELECT jsonb_agg(to_jsonb(c)) FROM task_constraints c JOIN tasks t ON t.exploration_id=c.exploration_id WHERE t.id=f.task_id), '[]'::jsonb))
+	FROM findings f WHERE f.id=$1 FOR UPDATE OF f`, findingID, locale.Text(locale.FromContext(ctx), "Uncategorized")).Scan(&title, &snapshot)
+	if err != nil {
+		return nil, nil, false, err
+	}
+	r, err := scanRetest(tx.QueryRowContext(ctx, `SELECT `+retestCols+` FROM finding_retests WHERE finding_id=$1 AND status IN ('pending','running')`, findingID))
+	if err != nil {
+		return nil, nil, false, err
+	}
+	if r != nil {
+		return r, nil, false, nil
+	}
+	if spec.skipIfVerified {
+		r, err = scanRetest(tx.QueryRowContext(ctx, `SELECT `+retestCols+` FROM finding_retests
+		WHERE finding_id=$1 AND kind=$2 AND status='completed' ORDER BY id DESC LIMIT 1`, findingID, spec.kind))
+		if err != nil {
+			return nil, nil, false, err
+		}
+		if r != nil {
+			return r, nil, false, nil
+		}
+	}
+	// Keep the title within the same limit as ordinary conversations.
+	if runes := []rune(title); len(runes) > 100 {
+		title = string(runes[:100])
+	}
+	c, err := scanConv(tx.QueryRowContext(ctx, `INSERT INTO conversations(agent_key,title) VALUES ($1,$2) RETURNING `+convCols,
+		spec.agentKey, spec.convTitle(title)))
+	if err != nil {
+		return nil, nil, false, err
+	}
+	r, err = scanRetest(tx.QueryRowContext(ctx, `INSERT INTO finding_retests(finding_id,conversation_id,notes,snapshot,kind,parent_id) VALUES ($1,$2,$3,$4,$5,$6) RETURNING `+retestCols,
+		findingID, c.ID, strings.TrimSpace(spec.notes), snapshot, spec.kind, spec.parentID))
+	if err != nil {
+		return nil, nil, false, err
+	}
+	msg := spec.message(r)
+	_, err = tx.ExecContext(ctx, `INSERT INTO conversation_activities(conversation_id,worker,kind,summary,detail) VALUES ($1,$2,'user',$3,$4)`,
+		c.ID, spec.agentKey, spec.userSummary, msg)
+	if err != nil {
+		return nil, nil, false, err
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, nil, false, err
+	}
+	return r, &c, true, nil
+}
+
+// VerificationMessage is the built-in first message of a verify conversation.
+func (r *FindingRetest) VerificationMessage(lang locale.Lang) string {
+	return locale.Text(lang, "Independently verify code-review finding #%d. You did not write it: try to refute it. First call get_finding_verification_context to read the finding, its task goal and the local clone path, re-read every cited source location, then call record_finding_verification_result once with confirmed, needs_validation or rejected.", r.FindingID)
+}
+
+func (r *FindingRetest) InitialMessage() string {
+	return r.InitialMessageForLanguage(locale.ServerDefault())
+}
+
+// InitialMessageForLanguage renders only built-in instructions, preserving notes verbatim.
+func (r *FindingRetest) InitialMessageForLanguage(lang locale.Lang) string {
+	msg := locale.Text(lang, "Please retest finding #%d. First call get_finding_retest_context to read the original evidence and constraints linked to this conversation, perform targeted verification, then call record_finding_retest_result to save the conclusion.", r.FindingID)
+	if r.Notes != "" {
+		msg += locale.Text(lang, "\n\nAdditional notes for this retest:\n") + r.Notes
+	}
+	return msg
+}
+
+func (d *DB) ListFindingRetests(findingID int64) ([]*FindingRetest, error) {
+	rows, err := d.Query(`SELECT `+retestCols+` FROM finding_retests WHERE finding_id=$1 ORDER BY id DESC`, findingID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []*FindingRetest{}
+	for rows.Next() {
+		r, err := scanRetest(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+// GetFindingRetest reads one run of any kind, or nil when it does not exist.
+func (d *DB) GetFindingRetest(ctx context.Context, id int64) (*FindingRetest, error) {
+	return scanRetest(d.QueryRowContext(ctx, `SELECT `+retestCols+` FROM finding_retests WHERE id=$1`, id))
+}
+
+func (d *DB) FindingRetestForConversation(ctx context.Context, conversationID int64) (*FindingRetest, error) {
+	r, err := scanRetest(d.QueryRowContext(ctx, `SELECT `+retestCols+` FROM finding_retests WHERE conversation_id=$1`, conversationID))
+	if err != nil || r == nil {
+		return r, err
+	}
+	err = d.QueryRowContext(ctx, `SELECT snapshot FROM finding_retests WHERE id=$1`, r.ID).Scan(&r.Snapshot)
+	return r, err
+}
+
+// FailPendingRetestForConversation seals a conversation's unfinished retest when
+// the runner could not even load it — the retest ID is unknown on that path, so
+// the conversation ID is the only handle. Without it a transient read error
+// leaves the row 'pending' forever: the findings list keeps showing "Retesting" and
+// every later retest request is deduplicated against a run that is not happening, with only
+// a process restart (RecoverFindingRetests) able to clear it.
+func (d *DB) FailPendingRetestForConversation(conversationID int64, reason string) error {
+	_, err := d.Exec(`UPDATE finding_retests SET status='failed', error=$2, finished_at=now()
+		WHERE conversation_id=$1 AND status IN ('pending','running')`, conversationID, reason)
+	return err
+}
+
+func (d *DB) StartFindingRetest(ctx context.Context, id int64) (bool, error) {
+	res, err := d.ExecContext(ctx, `UPDATE finding_retests SET status='running', started_at=now() WHERE id=$1 AND status='pending'`, id)
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	return n == 1, err
+}
+
+// RecordFindingRetestResult never accepts a finding ID: ownership comes from the
+// runtime conversation. Identical retries are safe; a second verdict is refused.
+func (d *DB) RecordFindingRetestResult(ctx context.Context, conversationID int64, verdict, summary, evidence string) error {
+	if verdict != "reproduced" && verdict != "fixed" && verdict != "inconclusive" {
+		return locale.NewError("verdict must be reproduced / fixed / inconclusive")
+	}
+	return d.recordFindingRunResult(ctx, conversationID, RetestKindRetest, verdict, summary, evidence)
+}
+
+// RecordFindingVerificationResult stages the verdict of a verify conversation,
+// with the same conversation-owned binding and retry rules as retests.
+func (d *DB) RecordFindingVerificationResult(ctx context.Context, conversationID int64, verdict, summary, evidence string) error {
+	if !ValidVerificationVerdict(verdict) {
+		return locale.NewError("verdict must be confirmed / needs_validation / rejected")
+	}
+	kind := RetestKindVerify
+	if r, err := d.FindingRetestForConversation(ctx, conversationID); err == nil && r != nil && r.Kind == RetestKindRecheck {
+		kind = RetestKindRecheck
+	}
+	return d.recordFindingRunResult(ctx, conversationID, kind, verdict, summary, evidence)
+}
+
+// ValidVerificationVerdict reports whether v is a verify-run verdict.
+func ValidVerificationVerdict(v string) bool {
+	return v == "confirmed" || v == "needs_validation" || v == "rejected"
+}
+
+// RunVerdictDisposition is the finding status a completed run's verdict sets,
+// or "" to leave the disposition unchanged. needs_validation keeps the finding
+// pending for a human; the run keeps its blocker and validation plan.
+func RunVerdictDisposition(kind, verdict string) string {
+	switch {
+	case kind == RetestKindRetest && verdict == "fixed":
+		return FindingFixed
+	case kind == RetestKindVerify && verdict == "confirmed":
+		return FindingConfirmed
+	case kind == RetestKindVerify && verdict == "rejected":
+		return FindingFalsePositive
+	// A post-merge re-check asks the same question of the merged code: still
+	// there keeps the finding confirmed, gone marks it fixed.
+	case kind == RetestKindRecheck && verdict == "confirmed":
+		return FindingConfirmed
+	case kind == RetestKindRecheck && verdict == "rejected":
+		return FindingFixed
+	}
+	return ""
+}
+
+func (d *DB) recordFindingRunResult(ctx context.Context, conversationID int64, kind, verdict, summary, evidence string) error {
+	summary, evidence = strings.TrimSpace(summary), strings.TrimSpace(evidence)
+	if summary == "" || evidence == "" {
+		return locale.NewError("summary and evidence must not be empty; if inconclusive, describe the checks performed and the blocking reason")
+	}
+	if len(summary) > 16000 || len(evidence) > 128000 {
+		return locale.NewError("Retest result is too long (summary <= 16 KB, evidence <= 128 KB)")
+	}
+	res, err := d.ExecContext(ctx, `UPDATE finding_retests SET verdict=$2,summary=$3,evidence=$4
+	WHERE conversation_id=$1 AND kind=$5 AND status='running' AND (verdict='' OR (verdict=$2 AND summary=$3 AND evidence=$4))`, conversationID, verdict, summary, evidence, kind)
+	if err != nil {
+		return err
+	}
+	if n, err := res.RowsAffected(); err != nil {
+		return err
+	} else if n == 0 {
+		return ErrRetestNotRunning
+	}
+	return nil
+}
+
+// FinishFindingRetest seals the result. Cancellation/failure takes precedence
+// over a staged verdict so an interrupted test cannot appear successfully fixed.
+// Only a newly completed verdict mapped by RunVerdictDisposition (retest fixed,
+// verify confirmed/rejected) updates triage, in the same transaction.
+func (d *DB) FinishFindingRetest(id int64, status, reason string) error {
+	if status != "completed" && status != "failed" && status != "stopped" {
+		return locale.NewError("invalid terminal retest status")
+	}
+	tx, err := d.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	// Lock the finding before the retest, matching creation and cascading deletion.
+	var findingID int64
+	err = tx.QueryRow(`SELECT f.id FROM findings f WHERE f.id=(SELECT finding_id FROM finding_retests WHERE id=$1) FOR UPDATE OF f`, id).Scan(&findingID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil // Finding/retest already deleted.
+	}
+	if err != nil {
+		return err
+	}
+	var finalStatus, verdict, kind string
+	err = tx.QueryRow(`UPDATE finding_retests SET
+	status=CASE WHEN $2='completed' AND verdict='' THEN 'failed' ELSE $2 END,
+	error=CASE WHEN $2='completed' AND verdict='' THEN $4 ELSE $3 END,
+	finished_at=now() WHERE id=$1 AND status IN ('pending','running') RETURNING status,verdict,kind`, id, status, reason, locale.Text(locale.ServerDefault(), "The agent did not save a retest conclusion; review the conversation and retest")).Scan(&finalStatus, &verdict, &kind)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil // A replay must not overwrite a later manual triage decision.
+	}
+	if err != nil {
+		return err
+	}
+	if disposition := RunVerdictDisposition(kind, verdict); finalStatus == "completed" && disposition != "" {
+		// Use the notifying variant, sharing semantics with manual status edits in the details page.
+		//
+		// Previously a bare UPDATE changed status after a "fixed" retest, but channels with
+		// on_status_change received no notification. The UI changed silently and operators
+		// had to open the platform to notice. Persist the status and notification event together;
+		// SetFindingStatusTx handles details such as skipping events when the status is unchanged.
+		// Use context.Background(): this entire legacy function uses context-free d.Begin()/
+		// tx.QueryRow/tx.Exec and has no cancellation signal to propagate. Adding a ctx argument
+		// would affect server call sites and multiple tests, beyond this change's scope.
+		if _, _, _, _, err := SetFindingStatusTx(context.Background(), tx, findingID, disposition); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+func (d *DB) RecoverFindingRetests() error {
+	_, err := d.Exec(`UPDATE finding_retests SET status='stopped', error=$1, finished_at=now() WHERE status IN ('pending','running')`, locale.Text(locale.ServerDefault(), "Service restarted; retest interrupted. Start a new retest"))
+	return err
+}

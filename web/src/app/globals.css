@@ -1,0 +1,210 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-topbar: var(--topbar);
+  --color-topbar-foreground: var(--topbar-foreground);
+  --color-topbar-muted: var(--topbar-muted);
+  --color-topbar-border: var(--topbar-border);
+  --color-topbar-input: var(--topbar-input);
+  --color-topbar-accent: var(--topbar-accent);
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sans);
+}
+
+:root {
+  --radius: 0.5rem;
+  /* Warm cream canvas instead of flat white; slate ink and mineral teal. */
+  --background: #f5f3ec;
+  --foreground: #24363d;
+  --card: #fbfaf6;
+  --card-foreground: #24363d;
+  --popover: #fbfaf6;
+  --popover-foreground: #24363d;
+  --primary: #158a88;
+  --primary-foreground: #fbfaf6;
+  --secondary: #ecebe3;
+  --secondary-foreground: #2c4249;
+  --muted: #ecebe3;
+  --muted-foreground: #5a6b70;
+  --accent: #dfeeec;
+  --accent-foreground: #0e6765;
+  --destructive: #b42318;
+  --border: #e2dfd5;
+  --input: #d2cfc4;
+  --ring: #158a88;
+  --chart-1: #158a88;
+  --chart-2: #53c5be;
+  --chart-3: #33494f;
+  --chart-4: #c4861d;
+  --chart-5: #7d8a8d;
+  --sidebar: #fbfaf6;
+  --sidebar-foreground: #33494f;
+  --sidebar-primary: #158a88;
+  --sidebar-primary-foreground: #fbfaf6;
+  --sidebar-accent: #dfeeec;
+  --sidebar-accent-foreground: #0e6765;
+  --sidebar-border: #e2dfd5;
+  --sidebar-ring: #158a88;
+  /* The global top bar stays deep slate in both modes. */
+  --topbar: #1b2a30;
+  --topbar-foreground: #f3f2ec;
+  --topbar-muted: #9db0b3;
+  --topbar-border: #2e4249;
+  --topbar-input: #24363d;
+  --topbar-accent: #53c5be;
+  --header-height: 3.5rem;
+}
+
+.dark {
+  /* Graphite canvas with a cool cast and mineral-teal signals. Depth ladder:
+     top bar and sidebar recede, page canvas, raised cards, floating popovers. */
+  --background: #0f1416;
+  --foreground: #e8eceb;
+  --card: #171e21;
+  --card-foreground: #e8eceb;
+  --popover: #1c2327;
+  --popover-foreground: #e8eceb;
+  --primary: #53c5be;
+  --primary-foreground: #062523;
+  --secondary: #1e2529;
+  --secondary-foreground: #cfd7d7;
+  --muted: #1e2529;
+  --muted-foreground: #9aa7ab;
+  --accent: #15302f;
+  --accent-foreground: #8edcd6;
+  --destructive: #f47575;
+  --border: #2b363b;
+  --input: #36424a;
+  --ring: #53c5be;
+  --chart-1: #53c5be;
+  --chart-2: #8edcd6;
+  --chart-3: #6c8288;
+  --chart-4: #d6a54f;
+  --chart-5: #9aa7ab;
+  --sidebar: #0b0f11;
+  --sidebar-foreground: #bcc6c7;
+  --sidebar-primary: #53c5be;
+  --sidebar-primary-foreground: #062523;
+  --sidebar-accent: #15302f;
+  --sidebar-accent-foreground: #8edcd6;
+  --sidebar-border: #1f282c;
+  --sidebar-ring: #53c5be;
+  --topbar: #0b0f11;
+  --topbar-foreground: #e8eceb;
+  --topbar-muted: #8e9da1;
+  --topbar-border: #1f282c;
+  --topbar-input: #171e21;
+  --topbar-accent: #53c5be;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  /* next/font declares the face variables on <body>, so the aliases must resolve there. */
+  body {
+    --font-sans: var(--font-instrument-sans);
+    --font-mono: var(--font-geist-mono);
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans), system-ui, sans-serif;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+html {
+  overscroll-behavior: none;
+}
+
+.disable-transitions * {
+  transition: none !important;
+}
+
+[data-print-root] {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: Letter;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 8.5in !important;
+    height: 11in !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body > *:not([data-print-root]) {
+    display: none !important;
+  }
+
+  [data-print-root] {
+    display: block !important;
+    width: 8.5in !important;
+    height: 11in !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    background: white !important;
+  }
+
+  [data-print-root] [data-print-paper] {
+    width: 8.5in !important;
+    height: 11in !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  [data-print-root] [data-print-paper],
+  [data-print-root] [data-print-paper] * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
