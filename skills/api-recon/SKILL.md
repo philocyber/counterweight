@@ -304,7 +304,7 @@ cd recon && npm install
 node runtime_harvest.js config.json
 ```
 
-Copy `credential_policy.js`, `response_budget.js` and `tls_policy.js` alongside `runtime_harvest.js` when preparing OUTDIR. Install the scripts package dependencies; the runtime requires Node >=20.18.1 and Undici 7.30.0 for request-scoped TLS dispatchers.
+Copy `credential_policy.js`, `response_budget.js` and `tls_policy.js` alongside `runtime_harvest.js` when preparing OUTDIR. Install the scripts package dependencies; the runtime requires Node >=22.12.0 and Undici 7.30.2 for request-scoped TLS dispatchers.
 
 Node forwarding and Chromium verify certificates by default. For an authorized self-signed target, set `"tls": { "insecure": true }` in config.json. This exception is limited to the exact HTTPS base origin, including its port; foreign HTTPS bundles, redirects and browser requests still require valid certificates. It does not disable HTTPS proxy certificate verification. The Node transport honors the configured HTTP(S) proxy, uses manual redirects and preserves streamed response budgets. Forwarding certificate failures return 502 and are recorded as coverage gaps. Chromium handles certificate errors per request URL through CDP; unsupported browsers fail setup instead of falling back to a global certificate bypass. Use platform-trusted certificates for ordinary/private-PKI browser workflows.
 
