@@ -285,7 +285,7 @@ model.
 - **Update authenticity.** In-app updates verify the archive against `SHA256SUMS` from the same
   release. When the build embeds release public keys (`selfupdate/release-keys.pub`), the updater also
   requires an Ed25519 signature (`SHA256SUMS.sig`) over that file and refuses the update otherwise.
-  This repository embeds the project's key (id `60061ba203b7d679`). A build with no embedded key
+  This repository embeds the project's key (id `5651d2fd00300539`). A build with no embedded key
   does not verify signatures: the checksum then only detects corruption, since anyone able to replace
   the release assets can replace both files. The update screen and log say which state applies.
 - **Workspace symlinks.** The workspace file API validates paths lexically; a symbolic link placed

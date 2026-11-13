@@ -128,7 +128,7 @@ signed file and to have the listed digest. Only after that is anything extracted
   update with an error, and nothing is extracted or executed. No setting or environment variable turns
   this off. Install that release manually after checking it (below), or build from source.
 - *This build embeds no keys* (a build whose `selfupdate/release-keys.pub` lists none; this
-  repository lists the project's key, id `60061ba203b7d679`). Updates work as before, and the progress and log say "This build does not verify release
+  repository lists the project's key, id `5651d2fd00300539`). Updates work as before, and the progress and log say "This build does not verify release
   signatures; only the SHA256SUMS checksum was checked". The checksum protects against corruption, but
   not against someone who can replace both release files.
 
