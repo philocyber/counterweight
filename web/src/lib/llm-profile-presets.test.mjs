@@ -4,6 +4,7 @@ import {
   BEDROCK_REGIONS,
   bedrockBaseUrlForRegion,
   getLLMProfilePreset,
+  LLM_PRESET_SESSION_HEADERS,
   LLM_PROFILE_PRESET_IDS,
   LLM_VENDOR_IDS,
   LLM_VENDORS,
@@ -83,6 +84,32 @@ test("gateway presets use the documented base URLs, formats and unset reasoning 
   }
   assert.match(getLLMProfilePreset("vercel-gateway-chat").model, /\//, "Vercel model IDs are provider/model");
   assert.doesNotMatch(getLLMProfilePreset("bedrock-claude").model, /\//, "Bedrock model IDs have no slash");
+});
+
+test("OpenCode presets use the Chat Completions endpoints and send the OpenCode session header", () => {
+  const expected = {
+    "opencode-zen": "https://opencode.ai/inference/openai/v1",
+    "opencode-go": "https://opencode.ai/inference/go/openai/v1",
+  };
+  for (const [id, baseUrl] of Object.entries(expected)) {
+    const preset = getLLMProfilePreset(id);
+    assert.equal(preset.format, "openai");
+    assert.equal(preset.base_url, baseUrl);
+    assert.equal(preset.model, "deepseek-v4.1-flash");
+    assert.equal(preset.session_header_key, "x-opencode-session");
+    assert.equal(preset.thinking_type, "");
+    assert.equal(preset.reasoning_effort, "");
+    assert.equal(preset.context_window_k, 200);
+    assert.deepEqual(llmEndpointWarnings(preset.format, preset.base_url, preset.model), [], `${id} must pass its own checks`);
+  }
+  assert.equal(vendorOfPreset("opencode-zen"), "opencode");
+  assert.deepEqual(LLM_PRESET_SESSION_HEADERS, ["x-opencode-session"]);
+  // Other presets leave the session header to the user.
+  for (const id of LLM_PROFILE_PRESET_IDS.filter((id) => !id.startsWith("opencode-"))) {
+    assert.equal(getLLMProfilePreset(id).session_header_key, undefined, id);
+  }
+  const next = applyLLMProfilePreset({ session_header_key: "" }, "opencode-zen");
+  assert.equal(next.session_header_key, "x-opencode-session");
 });
 
 test("every preset belongs to exactly one vendor and vendor lists contain only known presets", () => {

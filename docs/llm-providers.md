@@ -36,7 +36,7 @@ Verified against official documentation on **2026-10-03**. Provider availability
 
 ## Gateways: one key, many models
 
-Instead of one direct key per provider (Anthropic, OpenAI, DeepSeek, GLM, Qwen), a single gateway key can reach many models. Counterweight needs no new provider format for this: both gateways expose the Anthropic Messages and OpenAI Chat Completions/Responses surfaces, so a profile only needs the right **Format**, **Base URL**, **model ID** and key. Open **LLM → New** and pick a **Provider** (Anthropic, OpenAI, Z.ai, Vercel AI Gateway or Amazon Bedrock): the first template for that provider fills the whole form at once, a second list switches between that provider's templates, Bedrock adds an **AWS Region** list that rewrites the Base URL, and a link opens the provider's page for creating the key. You then only paste the key. Direct provider keys keep working unchanged.
+Instead of one direct key per provider (Anthropic, OpenAI, DeepSeek, GLM, Qwen), a single gateway key can reach many models. Counterweight needs no new provider format for this: both gateways expose the Anthropic Messages and OpenAI Chat Completions/Responses surfaces, so a profile only needs the right **Format**, **Base URL**, **model ID** and key. Open **LLM → New** and pick a **Provider** (Anthropic, OpenAI, Z.ai, Vercel AI Gateway, Amazon Bedrock or OpenCode): the first template for that provider fills the whole form at once, a second list switches between that provider's templates, Bedrock adds an **AWS Region** list that rewrites the Base URL, and a link opens the provider's page for creating the key. You then only paste the key. Direct provider keys keep working unchanged.
 
 | Template | Format | Base URL | Example model | Load models |
 | --- | --- | --- | --- | --- |
@@ -44,6 +44,8 @@ Instead of one direct key per provider (Anthropic, OpenAI, DeepSeek, GLM, Qwen),
 | Vercel AI Gateway, Claude | Anthropic | `https://ai-gateway.vercel.sh` | `anthropic/claude-sonnet-5` | Yes |
 | Amazon Bedrock, Claude | Anthropic | `https://bedrock-runtime.us-east-1.amazonaws.com/anthropic` | `us.anthropic.claude-sonnet-5` | No (type the ID) |
 | Amazon Bedrock, open models | OpenAI Chat Completions | `https://bedrock-mantle.us-east-1.api.aws/v1` | `openai.gpt-oss-120b` | Yes |
+| OpenCode Zen (pay as you go) | OpenAI Chat Completions | `https://opencode.ai/inference/openai/v1` | `deepseek-v4.1-flash` | Not verified |
+| OpenCode Go (subscription) | OpenAI Chat Completions | `https://opencode.ai/inference/go/openai/v1` | `deepseek-v4.1-flash` | Not verified |
 
 The templates leave thinking and effort unset and declare a conservative 200K context window, because support differs per model and gateways reject fields a model lacks. Set them for the model you pick. Like every template, selecting one only fills the form: nothing is saved, activated or contacted until you save and click **Test connection** or **Load models**.
 
@@ -69,6 +71,15 @@ Two endpoints are used, both authenticated by the same key:
 - **bedrock-mantle** (the "Bedrock open models" template): `/v1`, with **Load models** support. It serves DeepSeek, Qwen, GLM, Kimi, Mistral, gpt-oss and others. A few models are served under `/openai/v1` instead; if a request fails with *isn't supported on this route*, change the path.
 
 Model access and IAM still apply. The principal behind the key needs `bedrock:CallWithBearerToken` plus `bedrock:InvokeModel` (runtime), or `bedrock-mantle:CallWithBearerToken` plus `bedrock-mantle:CreateInference` (mantle), and the model must be enabled for your account in that Region. Not every model is on both endpoints; check [endpoint availability](https://docs.aws.amazon.com/bedrock/latest/userguide/models-endpoint-availability.html).
+
+### OpenCode Zen and OpenCode Go
+
+1. Create an API key in the OpenCode console: a Zen key for pay-as-you-go, or the key of a Go subscription.
+2. Choose the OpenCode template that matches the key. It fills the Base URL and sets **Custom session header** to `x-opencode-session`. Keep it: Counterweight then sends a stable session ID per conversation in that header, which OpenCode Go asks clients to send and without which the Zen endpoint answers `400 MissingSessionID`.
+3. Replace the model ID with the one you want. These templates use the Chat Completions endpoint, which serves DeepSeek, GLM, Kimi and the other open models; GPT and Claude models are served on OpenCode's Responses and Anthropic endpoints instead, so pick another template for those.
+4. **Test connection**, save, **Set active**.
+
+Free models (IDs ending in `-free`) only work from OpenCode itself; use a paid model. On Go, DeepSeek models run only in the **Global** region: select it under **Regions** in the OpenCode console. Counterweight identifies itself with the `counterweight` user agent, as OpenCode asks clients to. See [Zen](https://opencode.ai/docs/zen/) and [Go](https://opencode.ai/docs/go/).
 
 ### Built-in error guidance
 

@@ -28,6 +28,7 @@ const VENDOR_LABEL: Record<LLMVendorId, MessageKey> = {
   zai: "providers.vendorZai",
   vercel: "providers.vendorVercel",
   bedrock: "providers.vendorBedrock",
+  opencode: "providers.vendorOpencode",
 };
 
 const PRESET_LABEL: Record<LLMProfilePresetId, MessageKey> = {
@@ -43,6 +44,8 @@ const PRESET_LABEL: Record<LLMProfilePresetId, MessageKey> = {
   "vercel-gateway-claude": "providers.vercelClaude",
   "bedrock-claude": "providers.bedrockClaude",
   "bedrock-open-models": "providers.bedrockOpen",
+  "opencode-zen": "providers.opencodeZen",
+  "opencode-go": "providers.opencodeGo",
 };
 
 const CHOICE_NAME: Record<Choice, MessageKey> = {
@@ -51,12 +54,13 @@ const CHOICE_NAME: Record<Choice, MessageKey> = {
   zai: "models.choiceZai",
   vercel: "models.choiceVercel",
   bedrock: "models.choiceBedrock",
+  opencode: "models.choiceOpencode",
   local: "models.choiceLocal",
 };
 
 const GROUPS: { label: MessageKey; leaves: MessageKey; choices: Choice[] }[] = [
   { label: "models.groupHosted", leaves: "models.leavesHosted", choices: ["anthropic", "openai", "zai"] },
-  { label: "models.groupGateway", leaves: "models.leavesGateway", choices: ["vercel", "bedrock"] },
+  { label: "models.groupGateway", leaves: "models.leavesGateway", choices: ["vercel", "bedrock", "opencode"] },
   { label: "models.groupLocal", leaves: "models.leavesLocal", choices: ["local"] },
 ];
 
@@ -119,6 +123,21 @@ function PresetHelp({ preset }: { preset: LLMProfilePresetId | "" }) {
               ? "https://vercel.com/docs/ai-gateway/authentication-and-byok"
               : "https://docs.aws.amazon.com/bedrock/latest/userguide/api-keys.html",
             t(vercel ? "providers.vercelDocs" : "providers.bedrockDocs"),
+          )}
+        </div>
+      </>
+    );
+  }
+  if (preset.startsWith("opencode-")) {
+    return (
+      <>
+        <p className="text-muted-foreground text-xs">
+          {t(preset === "opencode-go" ? "providers.opencodeGoHelp" : "providers.opencodeZenHelp")}
+        </p>
+        <div className="flex flex-wrap gap-3 text-xs">
+          {link(
+            preset === "opencode-go" ? "https://opencode.ai/docs/go/" : "https://opencode.ai/docs/zen/",
+            t("providers.opencodeDocs"),
           )}
         </div>
       </>
@@ -321,9 +340,14 @@ export function ConnectWizard({ d, hasActiveProfile }: { d: ProfileDraft; hasAct
               <p className="text-muted-foreground text-xs">
                 {local
                   ? t("models.leavesLocal")
-                  : t(vendor === "vercel" || vendor === "bedrock" ? "models.leavesGateway" : "models.leavesHosted", {
-                      p0: t(CHOICE_NAME[choice]),
-                    })}
+                  : t(
+                      vendor === "vercel" || vendor === "bedrock" || vendor === "opencode"
+                        ? "models.leavesGateway"
+                        : "models.leavesHosted",
+                      {
+                        p0: t(CHOICE_NAME[choice]),
+                      },
+                    )}
               </p>
             </div>
 

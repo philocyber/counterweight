@@ -59,6 +59,7 @@ export const en = {
   vendorZai: "Z.ai (GLM)",
   vendorVercel: "Vercel AI Gateway (one key, many models)",
   vendorBedrock: "Amazon Bedrock (one key, many models)",
+  vendorOpencode: "OpenCode (one key, many models)",
   region: "AWS Region",
   regionHelp: "Must match the Region the Bedrock API key was created in. Other Regions: edit the Base URL below.",
   getKey: "Get a {p0} API key",
@@ -69,6 +70,13 @@ export const en = {
   vercelClaude: "Vercel AI Gateway · Claude, Anthropic Messages",
   bedrockClaude: "Amazon Bedrock · Claude, Anthropic Messages",
   bedrockOpen: "Amazon Bedrock · DeepSeek, Qwen, GLM and other models",
+  opencodeZen: "OpenCode Zen · pay as you go, Chat Completions",
+  opencodeGo: "OpenCode Go · subscription, Chat Completions",
+  opencodeZenHelp:
+    "Use an OpenCode Zen API key. This endpoint serves DeepSeek, GLM, Kimi and the other open models; change the model ID to the one you want from the Zen model list. Free models only work inside OpenCode itself, so pick a paid one. The template fills the session header with x-opencode-session, which OpenCode needs to keep each conversation on one session. The 200K window is conservative: set the chosen model's real window.",
+  opencodeGoHelp:
+    "Use the API key of your OpenCode Go subscription. Change the model ID to the one you want from the Go model list. DeepSeek models only run in the Global region: select Global under Regions in the OpenCode console. The template fills the session header with x-opencode-session, which OpenCode asks clients to send. The 200K window is conservative: set the chosen model's real window.",
+  opencodeDocs: "OpenCode documentation",
   vercelHelp:
     "Use an AI Gateway API key from the Vercel dashboard (AI Gateway, API keys). Model IDs are provider/model, for example anthropic/claude-sonnet-5; use Load models for the exact list of providers and models. For OpenAI models that need function calling, switch Format to OpenAI (Responses API) and keep the same Base URL. Thinking, effort and the 200K window are left conservative: set them for the model you pick.",
   bedrockClaudeHelp:
@@ -158,6 +166,7 @@ export const es = {
   vendorZai: "Z.ai (GLM)",
   vendorVercel: "Vercel AI Gateway (una clave, muchos modelos)",
   vendorBedrock: "Amazon Bedrock (una clave, muchos modelos)",
+  vendorOpencode: "OpenCode (una clave, muchos modelos)",
   region: "Región de AWS",
   regionHelp: "Debe coincidir con la Región en la que se creó la clave de API de Bedrock. Para otras Regiones: edite la URL base a continuación.",
   getKey: "Obtener una clave de API de {p0}",
@@ -168,6 +177,13 @@ export const es = {
   vercelClaude: "Vercel AI Gateway · Claude, Anthropic Messages",
   bedrockClaude: "Amazon Bedrock · Claude, Anthropic Messages",
   bedrockOpen: "Amazon Bedrock · DeepSeek, Qwen, GLM y otros modelos",
+  opencodeZen: "OpenCode Zen · pago por uso, Chat Completions",
+  opencodeGo: "OpenCode Go · suscripción, Chat Completions",
+  opencodeZenHelp:
+    "Use una clave de API de OpenCode Zen. Este endpoint sirve DeepSeek, GLM, Kimi y los demás modelos abiertos; cambie el ID de modelo por el que quiera de la lista de modelos de Zen. Los modelos gratuitos solo funcionan dentro de OpenCode, así que elija uno pago. El preajuste completa el encabezado de sesión con x-opencode-session, que OpenCode necesita para mantener cada conversación en una misma sesión. La ventana de 200 K es conservadora: configure la ventana real del modelo elegido.",
+  opencodeGoHelp:
+    "Use la clave de API de su suscripción a OpenCode Go. Cambie el ID de modelo por el que quiera de la lista de modelos de Go. Los modelos DeepSeek solo funcionan en la región Global: elija Global en Regions, en la consola de OpenCode. El preajuste completa el encabezado de sesión con x-opencode-session, que OpenCode pide a los clientes. La ventana de 200 K es conservadora: configure la ventana real del modelo elegido.",
+  opencodeDocs: "Documentación de OpenCode",
   vercelHelp:
     "Use una clave de API de AI Gateway del panel de Vercel (AI Gateway, claves de API). Los ID de modelo son proveedor/modelo, por ejemplo anthropic/claude-sonnet-5; use Cargar modelos para la lista exacta de proveedores y modelos. Para los modelos de OpenAI que necesitan llamadas a funciones, cambie el Formato a OpenAI (Responses API) y mantenga la misma URL base. El pensamiento, el esfuerzo y la ventana de 200 K se dejan conservadores: configúrelos para el modelo que elija.",
   bedrockClaudeHelp:
