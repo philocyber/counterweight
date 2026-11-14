@@ -165,3 +165,25 @@ func TestProviderSuccessfulStreamIsNotPrefetched(t *testing.T) {
 		t.Fatal("stream capture changed")
 	}
 }
+
+func TestModelRequestsIdentifyCounterweight(t *testing.T) {
+	var seen []string
+	transport := quotaAwareTransport{base: roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+		seen = append(seen, r.Header.Get("User-Agent"))
+		return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader("ok"))}, nil
+	})}
+	for _, preset := range []string{"", "custom-client/2.0"} {
+		req, _ := http.NewRequestWithContext(context.Background(), "POST", "https://example.invalid", nil)
+		if preset != "" {
+			req.Header.Set("User-Agent", preset)
+		}
+		resp, err := transport.RoundTrip(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+	}
+	if len(seen) != 2 || seen[0] != modelUserAgent || seen[1] != "custom-client/2.0" {
+		t.Fatalf("user agents sent: %q", seen)
+	}
+}

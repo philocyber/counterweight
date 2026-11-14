@@ -626,6 +626,19 @@ function TaskDetailInner() {
         {/* Below the title bar: notices, then the facts, the tabs and the description. */}
         <div className="flex min-w-0 flex-col gap-2 px-4 pt-3 pb-3 lg:px-6">
           <TaskBudgetBanner taskId={id} budget={task.budget} hold={budgetHold} onChanged={load} />
+          {task.planning_error && !terminal && (
+            <Alert className="border-amber-500/40 bg-amber-500/10" role="alert">
+              <CircleAlertIcon />
+              <AlertTitle>{swt("taskdetail.planningFailedTitle")}</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p className="break-words font-mono text-xs">{task.planning_error}</p>
+                <p>{swt("taskdetail.planningFailedHelp")}</p>
+                <Button size="sm" variant="outline" asChild>
+                  <Link href="/system/llm">{swt("taskdetail.planningFailedModels")}</Link>
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
           {executionHold && <ExecutionPausedAlert taskId={id} reason={executionHold.reason} onResumed={load} />}
           {approvalHold && (
             <Alert className="border-amber-500/40 bg-amber-500/10" role="alert">

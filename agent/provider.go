@@ -374,7 +374,14 @@ type quotaAwareTransport struct {
 // Error inspection is bounded independently of successful SSE streaming.
 const maxProvider429Body = 64 * 1024
 
+// modelUserAgent identifies Counterweight to model endpoints. Some gateways ask
+// clients to name themselves instead of sending a generic HTTP library name.
+const modelUserAgent = "counterweight"
+
 func (t quotaAwareTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if req.Header.Get("User-Agent") == "" {
+		req.Header.Set("User-Agent", modelUserAgent)
+	}
 	// Custom session-id header: name is user-configured, value is THIS run's
 	// session id (norma stashes it on the context via transcript.WithSessionID).
 	// Stable across a session's turns and distinct across sessions — exactly what

@@ -32,9 +32,9 @@ function cooldownText(secs: number) {
 }
 
 // Profile health prioritizes missing API keys because requests cannot be sent at all;
-// other states come from rotation circuit records. With rotation off, Healthy means no known failures.
+// other states come from rotation circuit records, which exist only while the profile is monitored.
 type Health = { label: string; cls: string; hint?: string };
-function healthOf(p: LLMProfile, m?: LLMPoolMember): Health {
+function healthOf(p: LLMProfile, m: LLMPoolMember | undefined, monitored: boolean): Health {
   if (!p.api_key_hint && !p.subscription_id) {
     return {
       label: swt("interface.m1334"),
@@ -55,6 +55,15 @@ function healthOf(p: LLMProfile, m?: LLMPoolMember): Health {
       label: swt("interface.m1338", { p0: m.fails }),
       cls: "border-amber-500/50 text-amber-700 dark:text-amber-400",
       hint: m.last_error,
+    };
+  }
+  // Failures are recorded only for profiles in an active rotation. Anything else has no record either way,
+  // so it is not called Healthy.
+  if (!m || !monitored) {
+    return {
+      label: swt("models.healthUnmonitored"),
+      cls: "border-muted-foreground/40 text-muted-foreground",
+      hint: swt("models.healthUnmonitoredHint"),
     };
   }
   return { label: swt("interface.m1339"), cls: "border-emerald-500/50 text-emerald-700 dark:text-emerald-400" };
@@ -315,6 +324,10 @@ export default function LLMPage() {
     for (const c of pool?.chain ?? []) m.set(c.profile_id, c);
     return m;
   }, [swLocale, pool]);
+  // The chain lists every profile, but failures are recorded only when rotation is on and has at least two
+  // members to fail over between; with fewer the profile is called directly and nothing is tracked.
+  const rotationMembers = (pool?.chain ?? []).filter((c) => !c.excluded).length;
+  const monitored = (m?: LLMPoolMember) => !!pool?.enabled && rotationMembers >= 2 && !!m && !m.excluded;
 
   async function activate(id: string, name: string) {
     try {
@@ -384,7 +397,7 @@ export default function LLMPage() {
         <TabsContent value="profiles" className="mt-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {profiles.map((p) => {
-              const h = healthOf(p, health.get(p.id));
+              const h = healthOf(p, health.get(p.id), monitored(health.get(p.id)));
               return (
                 // Mouse users can click anywhere on the card; keyboard users get the Edit button below, so
                 // the card itself is not an interactive role and does not nest controls.

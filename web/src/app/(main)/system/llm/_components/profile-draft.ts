@@ -11,6 +11,7 @@ import {
   applyLLMProfilePreset,
   bedrockBaseUrlForRegion,
   DEFAULT_BEDROCK_REGION,
+  LLM_PRESET_SESSION_HEADERS,
   LLM_PROFILE_PRESET_NAMES,
   LLM_VENDORS,
   type LLMProfilePresetId,
@@ -222,6 +223,9 @@ export function useProfileDraft({
     setCw(String(next.context_window_k));
     setMaxTokens(String(next.max_tokens));
     setMaxTokensField(fromStore(next.max_tokens_field));
+    // A preset that needs a session header sets it; another preset clears only a header a template set.
+    if (next.session_header_key) setSessionHeaderKey(next.session_header_key);
+    else if (LLM_PRESET_SESSION_HEADERS.includes(sessionHeaderKey.trim())) setSessionHeaderKey("");
     setModels([]);
     setModelsOpen(false);
   }

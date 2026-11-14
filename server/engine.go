@@ -933,7 +933,11 @@ func (e *Engine) plannerLoop(ctx context.Context, t *Task) {
 		switch {
 		case err != nil && ectx.Err() == nil:
 			log.Printf(locale.Text(locale.FromContext(ctx), "[planner] task %s planning failed: %v"), t.ID, err)
+			t.setPlanningError(err)
+		case err != nil:
+			// Cancelled by a pause, a stop or the deadline: not a planning failure.
 		case met:
+			t.setPlanningError(nil)
 			log.Printf(locale.Text(locale.FromContext(ctx), "[planner] task %s determined goals met: %s"), t.ID, reason)
 			// A review that is about to complete first hands over supplementary scanner leads, if any, and continues.
 			if e.scanHandover(ctx, t) {
@@ -950,6 +954,7 @@ func (e *Engine) plannerLoop(ctx context.Context, t *Task) {
 			// A finished task keeps no container; later work on it starts a new one.
 			e.releaseExecution(t.ID)
 		default:
+			t.setPlanningError(nil)
 			log.Printf(locale.Text(locale.FromContext(ctx), "[planner] task %s planning complete"), t.ID)
 		}
 		e.touch(t.ID)

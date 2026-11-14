@@ -21,6 +21,11 @@
 //   https://docs.aws.amazon.com/bedrock/latest/userguide/endpoints.html
 //   https://docs.aws.amazon.com/bedrock/latest/userguide/inference-messages-api.html
 //   https://docs.aws.amazon.com/bedrock/latest/userguide/inference-chat-completions.html
+// OpenCode presets verified 2026-11-13 (endpoint tables, model IDs, session header):
+//   https://opencode.ai/docs/zen/
+//   https://opencode.ai/docs/go/
+// OpenCode Go asks clients to send a stable session ID in x-opencode-session; the Zen endpoint answers
+// 400 MissingSessionID without it. The OpenCode presets therefore fill the session header field.
 //
 // Claude presets leave thinking.type empty on purpose: these models use adaptive thinking, Opus 5.5 and
 // Fable 5.1 cannot turn it off, and effort is the control. Effort is each model's documented default.
@@ -37,6 +42,8 @@ export const LLM_PROFILE_PRESET_IDS = [
   "vercel-gateway-claude",
   "bedrock-claude",
   "bedrock-open-models",
+  "opencode-zen",
+  "opencode-go",
 ] as const;
 export type LLMProfilePresetId = (typeof LLM_PROFILE_PRESET_IDS)[number];
 
@@ -54,6 +61,8 @@ export const LLM_PROFILE_PRESET_NAMES: Record<LLMProfilePresetId, string> = {
   "vercel-gateway-claude": "Vercel AI Gateway (Claude)",
   "bedrock-claude": "Bedrock Claude",
   "bedrock-open-models": "Bedrock open models",
+  "opencode-zen": "OpenCode Zen",
+  "opencode-go": "OpenCode Go",
 };
 
 export interface LLMProfilePresetFields {
@@ -65,6 +74,9 @@ export interface LLMProfilePresetFields {
   context_window_k: number;
   max_tokens: number;
   max_tokens_field: "";
+  // Header that carries the session ID on each request. Only presets whose endpoint needs one set it; the
+  // others leave whatever the user entered.
+  session_header_key?: string;
 }
 
 const ZAI_GENERAL = "https://api.z.ai/api/paas/v4";
@@ -75,6 +87,10 @@ const VERCEL_GATEWAY_V1 = `${VERCEL_GATEWAY}/v1`;
 // Bedrock API key was created in.
 const BEDROCK_RUNTIME_ANTHROPIC = "https://bedrock-runtime.us-east-1.amazonaws.com/anthropic";
 const BEDROCK_MANTLE_OPENAI = "https://bedrock-mantle.us-east-1.api.aws/v1";
+// Chat Completions endpoints; DeepSeek, GLM, Kimi and the other open models are served here.
+const OPENCODE_ZEN = "https://opencode.ai/inference/openai/v1";
+const OPENCODE_GO = "https://opencode.ai/inference/go/openai/v1";
+const OPENCODE_SESSION_HEADER = "x-opencode-session";
 
 const PRESETS: Record<LLMProfilePresetId, LLMProfilePresetFields> = {
   "zai-general": zai(ZAI_GENERAL),
@@ -89,6 +105,14 @@ const PRESETS: Record<LLMProfilePresetId, LLMProfilePresetFields> = {
   "vercel-gateway-claude": gateway("anthropic", VERCEL_GATEWAY, "anthropic/claude-sonnet-5"),
   "bedrock-claude": gateway("anthropic", BEDROCK_RUNTIME_ANTHROPIC, "us.anthropic.claude-sonnet-5"),
   "bedrock-open-models": gateway("openai", BEDROCK_MANTLE_OPENAI, "openai.gpt-oss-120b"),
+  "opencode-zen": {
+    ...gateway("openai", OPENCODE_ZEN, "deepseek-v4.1-flash"),
+    session_header_key: OPENCODE_SESSION_HEADER,
+  },
+  "opencode-go": {
+    ...gateway("openai", OPENCODE_GO, "deepseek-v4.1-flash"),
+    session_header_key: OPENCODE_SESSION_HEADER,
+  },
 };
 
 function zai(baseUrl: string): LLMProfilePresetFields {
@@ -153,7 +177,7 @@ function openaiResponses(model: string, effort: string): LLMProfilePresetFields 
 
 // Vendor-first selection: picking a vendor applies its first preset and offers the rest.
 // keyUrl is where the user creates the API key; it is only ever shown as a link.
-export const LLM_VENDOR_IDS = ["anthropic", "openai", "zai", "vercel", "bedrock"] as const;
+export const LLM_VENDOR_IDS = ["anthropic", "openai", "zai", "vercel", "bedrock", "opencode"] as const;
 export type LLMVendorId = (typeof LLM_VENDOR_IDS)[number];
 
 export const LLM_VENDORS: Record<LLMVendorId, { presets: LLMProfilePresetId[]; keyUrl: string }> = {
@@ -174,7 +198,14 @@ export const LLM_VENDORS: Record<LLMVendorId, { presets: LLMProfilePresetId[]; k
     presets: ["bedrock-claude", "bedrock-open-models"],
     keyUrl: "https://console.aws.amazon.com/bedrock/home#/api-keys",
   },
+  opencode: { presets: ["opencode-zen", "opencode-go"], keyUrl: "https://opencode.ai/docs/zen/" },
 };
+
+// Session headers that a preset fills in, so switching to a preset without one can clear a header a
+// template set without touching one the user typed.
+export const LLM_PRESET_SESSION_HEADERS: readonly string[] = [
+  ...new Set(Object.values(PRESETS).flatMap((p) => (p.session_header_key ? [p.session_header_key] : []))),
+];
 
 export function vendorOfPreset(id: string): LLMVendorId | undefined {
   return LLM_VENDOR_IDS.find((v) => (LLM_VENDORS[v].presets as readonly string[]).includes(id));

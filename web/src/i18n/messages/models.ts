@@ -29,6 +29,7 @@ export const en = {
   choiceZai: "Z.ai",
   choiceVercel: "Vercel AI Gateway",
   choiceBedrock: "Amazon Bedrock",
+  choiceOpencode: "OpenCode Zen / Go",
   choiceLocal: "Any OpenAI-compatible endpoint",
   choiceLocalHint: "Ollama, LM Studio, llama.cpp, vLLM",
   choiceCodex: "Sign in with ChatGPT",
@@ -74,6 +75,9 @@ export const en = {
   makeActiveQuestion: "Make this the active model?",
   makeActiveHelp: "Agents will use it right away. If you leave this off, your current active model stays active.",
   done: "Done",
+  healthUnmonitored: "Not monitored",
+  healthUnmonitoredHint:
+    "Failures are tracked only while this profile is in an active rotation. Use Test connection to check it now.",
 };
 
 export const es: Partial<Record<keyof typeof en, string>> = {
@@ -102,6 +106,7 @@ export const es: Partial<Record<keyof typeof en, string>> = {
   choiceZai: "Z.ai",
   choiceVercel: "Vercel AI Gateway",
   choiceBedrock: "Amazon Bedrock",
+  choiceOpencode: "OpenCode Zen / Go",
   choiceLocal: "Cualquier endpoint compatible con OpenAI",
   choiceLocalHint: "Ollama, LM Studio, llama.cpp, vLLM",
   choiceCodex: "Iniciar sesión con ChatGPT",
@@ -146,4 +151,7 @@ export const es: Partial<Record<keyof typeof en, string>> = {
   makeActiveQuestion: "¿Usar este como modelo activo?",
   makeActiveHelp: "Los agentes lo usarán de inmediato. Si lo dejas desactivado, tu modelo activo actual sigue activo.",
   done: "Listo",
+  healthUnmonitored: "Sin monitoreo",
+  healthUnmonitoredHint:
+    "Las fallas solo se registran mientras este perfil está en una rotación activa. Usa Probar conexión para verificarlo ahora.",
 };
