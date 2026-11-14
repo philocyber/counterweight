@@ -181,3 +181,33 @@ func TestFindUnknownToolKey(t *testing.T) {
 		t.Fatal("subfinder must resolve from the catalog")
 	}
 }
+
+func TestVersionFromOutputSkipsConfigErrorAndColour(t *testing.T) {
+	// subfinder on a first run: an error about its config file comes before the
+	// version line, both coloured.
+	out := "[\x1b[31mERR\x1b[0m] Could not create provider config file: open /root/.config/subfinder/provider-config.yaml: no such file or directory\n" +
+		"[\x1b[34mINF\x1b[0m] Current Version: v2.6.7\n"
+	if got := versionFromOutput(out); got != "v2.6.7" {
+		t.Fatalf("version = %q, want v2.6.7", got)
+	}
+	if got := versionFromOutput("\n  httpx 1.6.10 (linux/amd64)\n"); got != "1.6.10" {
+		t.Fatalf("version = %q, want 1.6.10", got)
+	}
+	// No version token: the first non-empty line, without colour codes.
+	if got := versionFromOutput("\n\x1b[1mdev build\x1b[0m\nsecond\n"); got != "dev build" {
+		t.Fatalf("fallback = %q, want the first line", got)
+	}
+	if got := versionFromOutput(""); got != "" {
+		t.Fatalf("empty output gave %q", got)
+	}
+}
+
+func TestEnsureConfigDirCreatesToolFolder(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	ensureConfigDir("subfinder")
+	if st, err := os.Stat(filepath.Join(home, ".config", "subfinder")); err != nil || !st.IsDir() {
+		t.Fatalf("config folder not created: %v", err)
+	}
+}

@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -135,6 +136,7 @@ func Install(ctx context.Context, c *http.Client, spec ToolSpec, dataDir string,
 	if err := extractBinary(zipPath, tmpBin, binName); err != nil {
 		return "", err
 	}
+	ensureConfigDir(spec.Key)
 	if err := smokeTest(tmpBin); err != nil {
 		return "", locale.Errorf("Downloaded binary does not run on this system: %w", err)
 	}
@@ -310,20 +312,53 @@ func smokeTest(binPath string) error {
 	return cmd.Run()
 }
 
-// probeVersion runs the binary with -version and returns the first non-empty
-// output line, best-effort. An empty result does not indicate failure — some
-// builds print to stderr in a form worth skipping rather than guessing at.
+// probeVersion runs the binary with -version and returns its version,
+// best-effort. An empty result does not indicate failure.
 func probeVersion(binPath string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	out, _ := exec.CommandContext(ctx, binPath, "-version").CombinedOutput()
-	for _, line := range strings.Split(string(out), "\n") {
+	return versionFromOutput(string(out))
+}
+
+var (
+	ansiEscape   = regexp.MustCompile(`\x1b\[[0-9;]*[A-Za-z]`)
+	versionToken = regexp.MustCompile(`\bv?\d+\.\d+(?:\.\d+)?(?:[-+][0-9A-Za-z.-]+)?\b`)
+)
+
+// versionFromOutput picks the version out of a -version run. ProjectDiscovery
+// tools log to stderr with colour codes, and on a first run they may print an
+// error about their config file before the version line, so the first
+// version-looking token wins over the first line. Without one, the first
+// non-empty line is returned as before.
+func versionFromOutput(out string) string {
+	out = ansiEscape.ReplaceAllString(out, "")
+	first := ""
+	for _, line := range strings.Split(out, "\n") {
 		line = strings.TrimSpace(line)
-		if line != "" {
-			return line
+		if line == "" {
+			continue
+		}
+		if v := versionToken.FindString(line); v != "" {
+			return v
+		}
+		if first == "" {
+			first = line
 		}
 	}
-	return ""
+	return first
+}
+
+// ensureConfigDir creates the folder a ProjectDiscovery tool keeps its config
+// in (~/.config/<tool>). The tools write their default config there on first
+// run but do not create the folder, so without it every run starts with an
+// error about the provider config file. Best-effort.
+func ensureConfigDir(key string) {
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return
+	}
+	_ = os.MkdirAll(filepath.Join(home, ".config", key), 0o700)
 }
 
 // progressWriter counts bytes and throttles updates instead of emitting SSE
