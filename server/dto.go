@@ -69,6 +69,10 @@ type TaskDTO struct {
 	CodeTarget             *db.TaskCodeTarget   `json:"code_target,omitempty"`
 	CoverageEnabled        bool                 `json:"coverage_enabled"` // Asset-coverage feature flag, fixed at creation.
 	Budget                 TaskBudgetDTO        `json:"budget"`           // Token/cost budget and current consumption.
+
+	// PlanningError is the error of the last planning round while the task is
+	// still active; empty once a round succeeds or the task ends.
+	PlanningError string `json:"planning_error,omitempty"`
 }
 
 // FindingSeverityDTO counts task findings by critical/high/medium/low severity.
@@ -107,6 +111,15 @@ func tokenTotalDTO(u db.TokenUsage) TokenTotalDTO {
 		CacheReadTokens:  u.CacheReadTokens,
 		CacheWriteTokens: u.CacheWriteTokens,
 	}
+}
+
+// activePlanningError reports the last planning error only for a task that can
+// still plan; a finished task's last error is history, not a current problem.
+func activePlanningError(t *Task, status string) string {
+	if isTerminalStatus(status) {
+		return ""
+	}
+	return t.planningErrorSnapshot()
 }
 
 func taskDTO(t *Task, status string) TaskDTO {
@@ -168,6 +181,7 @@ func taskDTOWithBudget(t *Task, status string, budget *db.TaskBudgetView) TaskDT
 		ActiveLLMProfileID: llmState.ActiveID,
 		LLMFailoverState:   llmState.FailoverState,
 		LLMFailoverReason:  llmState.FailoverReason,
+		PlanningError:      activePlanningError(t, status),
 		SourceTaskIDs:      sourceIDs,
 		CompanyIDs:         lifecycle.CompanyIDs,
 		AssessmentType:     taskAssessmentType(t), AssessmentTypeExplicit: lifecycle.AssessmentTypeExplicit, CodeTarget: lifecycle.CodeTarget,

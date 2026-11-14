@@ -77,6 +77,13 @@ type Task struct {
 	// a burst into one round, so several may pile up before drainTriggers() clears them.
 	trigMu          sync.Mutex
 	pendingTriggers []agent.TriggerEvent
+
+	// planningError is the error of the last planning round, cleared by the next
+	// round that succeeds. It is kept in memory only: a failed round leaves the
+	// task running and waiting for its next round, and without this the task list
+	// would say nothing about why no work happens.
+	planningMu    sync.Mutex
+	planningError string
 }
 
 // taskLifecycleState is an internally consistent view of the mutable task
@@ -1964,6 +1971,29 @@ func (t *Task) NotifyCancelled(intentID int64, summary, reason string) {
 }
 
 // drainTriggers returns and clears the trigger events accumulated since the last round.
+// planningErrorMaxLen bounds the stored message; provider errors can carry a
+// whole response body.
+const planningErrorMaxLen = 500
+
+func (t *Task) setPlanningError(err error) {
+	msg := ""
+	if err != nil {
+		msg = strings.TrimSpace(err.Error())
+		if r := []rune(msg); len(r) > planningErrorMaxLen {
+			msg = string(r[:planningErrorMaxLen]) + "…"
+		}
+	}
+	t.planningMu.Lock()
+	t.planningError = msg
+	t.planningMu.Unlock()
+}
+
+func (t *Task) planningErrorSnapshot() string {
+	t.planningMu.Lock()
+	defer t.planningMu.Unlock()
+	return t.planningError
+}
+
 func (t *Task) drainTriggers() []agent.TriggerEvent {
 	t.trigMu.Lock()
 	defer t.trigMu.Unlock()

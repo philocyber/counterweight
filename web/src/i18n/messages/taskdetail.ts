@@ -89,6 +89,11 @@ export const en = {
   typeChangeTimedOut:
     "The request took longer than 12 minutes and was cancelled. Reload the page to see whether it was applied.",
   openGithub: "Open repository on GitHub",
+  planningFailedShort: "Planning failed",
+  planningFailedTitle: "The last planning round failed",
+  planningFailedHelp:
+    "The task keeps showing as running and tries again on its next planning round. When the error comes from the model endpoint, check the model profile and use Test connection.",
+  planningFailedModels: "Open Models",
 };
 
 export const es: Partial<Record<keyof typeof en, string>> = {
@@ -180,4 +185,9 @@ export const es: Partial<Record<keyof typeof en, string>> = {
   typeChangeFailed: "No se pudo cambiar el tipo",
   typeChangeTimedOut: "La solicitud tardó más de 12 minutos y se canceló. Recarga la página para ver si se aplicó.",
   openGithub: "Abrir el repositorio en GitHub",
+  planningFailedShort: "Falló la planificación",
+  planningFailedTitle: "Falló la última ronda de planificación",
+  planningFailedHelp:
+    "La tarea sigue figurando en ejecución y vuelve a intentarlo en la próxima ronda de planificación. Si el error viene del endpoint del modelo, revisa el perfil del modelo y usa Probar conexión.",
+  planningFailedModels: "Abrir Modelos",
 };

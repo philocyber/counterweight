@@ -99,6 +99,8 @@ export interface Task {
   active_llm_profile_id?: number; // profile used by the next LLM call
   llm_failover_state?: "default" | "ready" | "chain_exhausted" | string;
   llm_failover_reason?: string;
+  // Error of the last planning round while the task is active; absent once a round succeeds.
+  planning_error?: string;
   source_task_ids?: string[]; // directly related tasks inherited as read-only context
   archive_blocked_by_task_id?: string; // live direct dependent that must be archived first
   company_ids?: number[]; // associated company scopes; current company assets join the task at creation
