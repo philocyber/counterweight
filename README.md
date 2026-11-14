@@ -559,6 +559,28 @@ must run against a disposable database whose name ends in `_test`). Security iss
 
 ## Acknowledgements
 
+<p align="center">
+  <a href="https://aisb.dev/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/brand/aisb-on-dark.svg" />
+      <img src="docs/brand/aisb-on-light.svg" alt="AISB, AI Security Bootcamp" height="44" />
+    </picture>
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://www.anthropic.com/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/brand/anthropic-on-dark.svg" />
+      <img src="docs/brand/anthropic-on-light.svg" alt="Anthropic" height="40" />
+    </picture>
+  </a>
+</p>
+
+Thank you to the [AI Security Bootcamp (AISB)](https://aisb.dev/) and to
+[Anthropic](https://www.anthropic.com/). Through AISB, Anthropic offered its participants six months
+of Claude Pro for open source and non-commercial work, and a large part of Counterweight was built
+with that subscription. Special thanks to Pranav Gade and the AISB team for making it happen. This is
+a thank-you, not an endorsement: neither organization maintains or endorses Counterweight.
+
 Counterweight is maintained by [PhiloCyber](https://github.com/Philocyber). It is derived from
 **ARTEX** by [Autumn-27](https://github.com/Autumn-27) (upstream commit `160fe13`), which provided its
 planner/worker engine and two-graph exploration model. Original authorship and upstream history are

@@ -601,6 +601,29 @@ issues públicos.
 
 ## Agradecimientos
 
+<p align="center">
+  <a href="https://aisb.dev/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/brand/aisb-on-dark.svg" />
+      <img src="docs/brand/aisb-on-light.svg" alt="AISB, AI Security Bootcamp" height="44" />
+    </picture>
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://www.anthropic.com/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/brand/anthropic-on-dark.svg" />
+      <img src="docs/brand/anthropic-on-light.svg" alt="Anthropic" height="40" />
+    </picture>
+  </a>
+</p>
+
+Gracias al [AI Security Bootcamp (AISB)](https://aisb.dev/) y a
+[Anthropic](https://www.anthropic.com/). A través de AISB, Anthropic ofreció a sus participantes seis
+meses de Claude Pro para trabajo open source y sin fines comerciales, y gran parte de Counterweight se
+construyó con esa suscripción. Un agradecimiento especial a Pranav Gade y al equipo de AISB por
+hacerlo posible. Es un agradecimiento, no un respaldo: ninguna de las dos organizaciones mantiene ni
+avala Counterweight.
+
 Counterweight es mantenido por [PhiloCyber](https://github.com/Philocyber). Deriva de **ARTEX**, de
 [Autumn-27](https://github.com/Autumn-27) (commit upstream `160fe13`), que aportó el motor de
 planificador y workers y el modelo de exploración de dos grafos. Se conservan la autoría original y
